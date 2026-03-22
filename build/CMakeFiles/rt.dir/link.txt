@@ -1,0 +1,1 @@
+/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/rt.dir/link.d CMakeFiles/rt.dir/src/core/background.cpp.o CMakeFiles/rt.dir/src/core/main.cpp.o CMakeFiles/rt.dir/lib/lodepng/lodepng.cpp.o CMakeFiles/rt.dir/lib/lodepng/lodepng_util.cpp.o CMakeFiles/rt.dir/lib/tinyxml2/tinyxml2.cpp.o -o rt

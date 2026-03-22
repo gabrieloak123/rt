@@ -1,0 +1,3 @@
+/home/gabriel/Work/Semesters/26.1/cg/proj/rt/build/CMakeFiles/rt.dir
+/home/gabriel/Work/Semesters/26.1/cg/proj/rt/build/CMakeFiles/edit_cache.dir
+/home/gabriel/Work/Semesters/26.1/cg/proj/rt/build/CMakeFiles/rebuild_cache.dir

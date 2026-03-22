@@ -1,17 +1,18 @@
+#ifndef BACKGROUND_HPP
+#define BACKGROUND_HPP
+
 #include <array>
-#include <cstdint>
 #include <vector>
 
-using b = uint16_t;
+#include "common.hpp"
+
 using d = double;
 using real_type = double;
 
-namespace rt {
+using std::array;
 
-struct RGBColor {
-  b red;
-  b green;
-  b blue;
+enum BackgroundType_e {
+	COLORS = 0,
 };
 
 class BackgroundColor {
@@ -21,23 +22,19 @@ public:
   // Dtro
   ~BackgroundColor();
 
-  // Each corner has a color associated with.
-  std::array<RGBColor, 4> corners;
-
-  // Corner indexes.
-  enum Corners_e {
-    TOP_LEFT = 0,
-    TOP_RIGHT,
-    BOTTOM_LEFT,
-    BOTTOM_RIGHT,
-  };
-
   void dummy();
 
 private:
+  // Each corner has a color associated with.
+  array<RGBColor, 4> m_corners;
+  BackgroundType_e m_type;
+  //mapping?
+
+
   // Return the linearly interpolated color in [A;B], based on the parameter
   RGBColor linear_interpolation(const RGBColor &A, const RGBColor &B, double t) const;
   // Sample and returns a color, based on the raster coordinate.
   RGBColor sampleUV(real_type u, real_type v) const;
 };
-} // namespace rt
+
+#endif //BACKGROUND_HPP
