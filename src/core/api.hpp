@@ -1,16 +1,34 @@
 #ifndef API_HPP
 #define API_HPP
 
-#include "film.hpp"
+#include <memory>
+#include <unordered_map>
+
 #include "background.hpp"
-#include "utils.hpp"
 #include "camera.hpp"
+#include "paramset.hpp"
+
+
+namespace rt {
+
+struct RenderOptions {
+	std::unique_ptr<Film> film;
+	std::unique_ptr<Background> bkg;
+	std::unordered_map<string, ParamSet> objects;
+};
 
 class API {
+	enum APIState {
+		Initializing,
+		Setup,
+		World,
+	};
+
 private:
-	Film m_film;
-	BackgroundColor m_bkg;
+	Background m_bkg;
 	Camera m_camera;
+	RenderOptions m_render_opts;
+
 
 public:
 	// stores the running options and initialize the API's internal states (graphics state)
@@ -22,5 +40,7 @@ public:
 	// frees all the resources previously allocated
 	void clean_up();
 };
+
+} //namespace rt
 
 #endif //API_HPP

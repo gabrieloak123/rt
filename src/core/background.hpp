@@ -15,26 +15,28 @@ enum BackgroundType_e {
 	COLORS = 0,
 };
 
-class BackgroundColor {
+namespace rt {
+
+class Background {
 public:
   // Ctro receives a list of four colors, for each corner.
-  BackgroundColor(const std::vector<RGBColor> &colors);
+  Background(const std::vector<RGBColor> &colors);
   // Dtro
-  ~BackgroundColor();
+  ~Background();
+
+  // Sample and returns a color, based on the raster coordinate.
+  RGBColor sample(real_type u, real_type v) const;
 
   void dummy();
-
 private:
   // Each corner has a color associated with.
   array<RGBColor, 4> m_corners;
   BackgroundType_e m_type;
-  //mapping?
-
 
   // Return the linearly interpolated color in [A;B], based on the parameter
   RGBColor linear_interpolation(const RGBColor &A, const RGBColor &B, double t) const;
-  // Sample and returns a color, based on the raster coordinate.
-  RGBColor sampleUV(real_type u, real_type v) const;
 };
+
+} // namespace rt
 
 #endif //BACKGROUND_HPP

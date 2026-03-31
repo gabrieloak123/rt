@@ -4,7 +4,6 @@
 #include <memory>
 #include <typeinfo>
 #include <unordered_map>
-#include <iostream>
 
 #include "common.hpp"
 
@@ -43,26 +42,14 @@ public:
 	//Converts from the generic type to a more specific one
 	//Like from Animal to Dog
 	template<typename T>
-	T retrieve(const string& key, const T& def) {
-		const auto search = m_render_opts.find(key);
+	T retrieve(const string& key, const T& def);
 
-		if(search == m_render_opts.end()) {
-			return def;
-		}
-
-	  	try {
-			auto test = dynamic_cast<Value<T>>(search->second);
-		} catch (const bad_cast& e) {
-			std::cout << "Cast failed: [" << e.what() << "]" << std::endl;
-		}
-
-		return dynamic_cast<Value<T>>(search->second).m_value;
-	}
+	//Assing a value to a key without casting the type
+	template<typename T>
+	void assign(const string key, const T& value);
 
 	template<typename T>
-	void assign(const string key, const T& value) {
-		m_render_opts[key] = make_shared<Value<T>>(value);
-	}
+	bool contains(const string key);
 };
 
 
