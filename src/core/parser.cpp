@@ -1,20 +1,30 @@
-#include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <stdexcept>
 #include <string>
 
-#include "parser.hpp"
-#include "common.hpp"
 #include "tinyxml2/tinyxml2.h"
 #include <CLI11/CLI11.hpp>
+
+#include "common.hpp"
+#include "parser.hpp"
+
+void print(vector<string> v) {
+  for (auto s : v) {
+    cout << s << endl;
+  }
+}
 
 struct WindowValidator : public CLI::Validator {
   WindowValidator() {
     name_ = "WINDOW";
     func_ = [](const string &str) {
-      vector<string> parts = CLI::detail::split(str, ',');
-      if (parts.size() != 4)
+      vector<string> parts = CLI::detail::split(str, ' ');
+      if (parts.size() != 4) {
+        cout << str << endl;
+        print(parts);
         return string("Crop window must have 4 values (x1,y1,x2,y2)");
+      }
 
       try {
         uint16_t x1 = std::stoul(parts[0]);
@@ -83,12 +93,13 @@ const static XMLValidator XMLValidator;
 
 namespace rt {
 
-void Parser::validate_arguments(rt::RunningOptions &run_opt) {
+void Parser::validate_arguments(int argc, char **argv,
+                                rt::RunningOptions &run_opt) {
   CLI::App opts;
   opts.set_help_flag("--help,-h", "Print this help text.");
 
-  char* input_scene;
-  array<u_int16_t, 4> crop_window;
+  string input_scene;
+  vector<u_int16_t> crop_window;
   bool quick = false;
   string outfile;
 
@@ -97,13 +108,26 @@ void Parser::validate_arguments(rt::RunningOptions &run_opt) {
       ->check(CLI::ExistingFile)
       ->check(XMLValidator);
 
-  // grupo
   auto crop_opt = opts.add_option("--window,-w", crop_window,
                                   "Specify an image crop window.")
-                      ->expected(4)
-                      ->delimiter(',')
-                      ->check(WindowValidator);
+                      ->check(CLI::Range(0, 65535))
+                      ->expected(4);
+  if (*crop_opt) {
+    if (crop_window.size() != 4) {
+      throw std::runtime_error("Crop window must have 4 values");
+    }
 
+    auto x1 = crop_window[0];
+    auto y1 = crop_window[1];
+    auto x2 = crop_window[2];
+    auto y2 = crop_window[3];
+
+    if (x2 < x1 || y2 < y1) {
+      throw std::runtime_error("Invalid window");
+    }
+
+    run_opt.crop_region = {Pixel{x1, y1}, Pixel{x2, y2}};
+  }
   opts.add_option("--outfile,-o", outfile,
                   "Write the rendered image to <filename>.")
       ->check(ImageFormatValidator);
@@ -112,7 +136,7 @@ void Parser::validate_arguments(rt::RunningOptions &run_opt) {
                 "Reduces quality parameters to render image quickly.");
 
   try {
-    opts.parse(m_argc, m_argv);
+    opts.parse(argc, argv);
   } catch (const CLI::ParseError &e) {
     std::exit(opts.exit(e));
   }
@@ -129,28 +153,46 @@ void Parser::validate_arguments(rt::RunningOptions &run_opt) {
   }
 }
 
-void Parser::parse_scene(char* filename) {
-	tinyxml2::XMLDocument scene;
-	
-	cout << "hi" <<endl;
-	if(scene.LoadFile(filename) != tinyxml2::XML_SUCCESS) {
-		cout << "Error loading scene." << endl;
-		return;
-	}
+void Parser::parse_scene(char *filename) {
+  tinyxml2::XMLDocument scene;
 
-	tinyxml2::XMLElement* root = scene.RootElement(); // tag RT3
+  if (scene.LoadFile(filename) != tinyxml2::XML_SUCCESS) {
+    cout << "Error loading scene." << endl;
+    return;
+  }
 
-	cout << "hii" <<endl;
-	if(root == nullptr) {
-		cout << "Elementless" << endl;
-		return;
-	}
+  tinyxml2::XMLElement *root = scene.RootElement(); // tag RT3
 
-	cout << "hiii" <<endl;
-	for(tinyxml2::XMLElement* tag = root; tag->FirstChildElement() != nullptr; tag->NextSiblingElement()) {
-		string tag_name = tag->Name();
-		cout << tag_name << endl;
-	}
+  if (root == nullptr) {
+    cout << "Elementless" << endl;
+    return;
+  }
+
+  for (tinyxml2::XMLElement *tag = root; tag->FirstChildElement() != nullptr;
+       tag->NextSiblingElement()) {
+    string tag_name = tag->Name();
+    cout << tag_name << endl;
+  }
 }
+
 } // namespace rt
-  //
+
+void print(rt::RunningOptions run_opt) {
+  cout << "RunningOptions:" << endl;
+  cout << "	- Input File:" << endl;
+  cout << "		- " << run_opt.scene << endl;
+  cout << "	- Region:" << endl;
+
+  if (run_opt.crop_region.has_value()) {
+    const auto &region = *run_opt.crop_region;
+
+    cout << "		- (" << region[0].x << ", " << region[0].y << ")"
+         << endl;
+    cout << "		- (" << region[1].x << ", " << region[1].y << ")"
+         << endl;
+  } else {
+    cout << "		not set" << endl;
+  }
+  cout << "	- Quick: " << run_opt.quick << endl;
+  cout << "	- Filename: " << run_opt.outfile << endl;
+}

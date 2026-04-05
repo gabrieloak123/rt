@@ -36,7 +36,7 @@ struct RunningOptions {
 	std::optional<array<Pixel,2>> crop_region;
 	bool quick{false};
 	string outfile;
-	char* scene;
+	string scene;
 };
 
 struct RGBColor {
