@@ -35,7 +35,7 @@ struct Pixel {
 struct RunningOptions {
 	std::optional<array<Pixel,2>> crop_region;
 	bool quick{false};
-	string outfile;
+	string outfile = "";
 	string scene;
 };
 
@@ -44,6 +44,16 @@ struct RGBColor {
   byte green;
   byte blue;
 };
+
+// @author = Sam Altman's child
+// ===
+inline std::istream& operator>>(std::istream& is, rt::RGBColor& color) {
+    return is >> color.red >> color.green >> color.blue;
+}
+inline std::ostream& operator<<(std::ostream& os, const rt::RGBColor& color) {
+    return os << color.red << " " << color.green << " " << color.blue;
+}
+// ===
 
 } // namespace rt
 

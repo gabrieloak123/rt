@@ -4,8 +4,15 @@
 
 namespace rt {
 
-	void API::init_engine(const RunningOptions &opt) {
+// App::AppState App::m_current_block_state = AppState::Uninitialized;
+RunningOptions API::m_run_options;
+// std::unique_ptr<RenderOptions> App::m_render_options;
 
+	void API::init_engine(const RunningOptions &opt) {
+		m_run_options = opt;
+
+		//mudar os estados
+		//instanciar o render_opts
 	}
 	// calls the static function parse(opt.file_name)
 	void run();

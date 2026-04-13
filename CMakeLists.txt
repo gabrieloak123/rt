@@ -14,6 +14,7 @@ set(CMAKE_BUILD_TYPE Debug) # just for gdb
 
 file(GLOB_RECURSE SRC_FILES
     ${CMAKE_SOURCE_DIR}/src/core/*.cpp
+    ${CMAKE_SOURCE_DIR}/src/msg_system/*.cpp
 )
 
 # Libs that need to compile
@@ -31,6 +32,7 @@ add_executable(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/src/core
+    ${CMAKE_SOURCE_DIR}/src/msg_system
     ${CMAKE_SOURCE_DIR}/lib
 )
 

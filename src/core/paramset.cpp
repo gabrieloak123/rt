@@ -1,9 +1,11 @@
 #include "paramset.hpp"
 
-template <typename T> T ParamSet::retrieve(const string &key, const T &def) {
-  const auto search = m_render_opts.find(key);
+namespace rt {
 
-  if (search == m_render_opts.end()) {
+template <typename T> T ParamSet::retrieve(const string &key, const T &def) const {
+  const auto search = m_ps.find(key);
+
+  if (search == m_ps.end()) {
     return def;
   }
 
@@ -17,9 +19,11 @@ template <typename T> T ParamSet::retrieve(const string &key, const T &def) {
 }
 
 template <typename T> void ParamSet::assign(const string key, const T &value) {
-  m_render_opts[key] = make_shared<Value<T>>(value);
+  m_ps[key] = make_shared<Value<T>>(value);
 }
 
 template <typename T> bool ParamSet::contains(const string key) {
-	return m_render_opts.count(key) == 1;
+	return m_ps.count(key) == 1;
 }
+
+} // namespace rt

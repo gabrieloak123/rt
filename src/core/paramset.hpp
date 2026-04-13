@@ -12,6 +12,8 @@ using std::shared_ptr;
 using std::make_shared;
 using std::unordered_map;
 
+namespace rt {
+
 // Generic class to be inherited by the other class below
 // Like the Animal class that both Dog and Cat are born from
 class Object {
@@ -33,7 +35,7 @@ public:
 
 class ParamSet {
 private:
-	unordered_map<string, shared_ptr<Object>> m_render_opts;
+	unordered_map<string, shared_ptr<Object>> m_ps;
 
 public:
 	ParamSet() = default;
@@ -42,7 +44,7 @@ public:
 	//Converts from the generic type to a more specific one
 	//Like from Animal to Dog
 	template<typename T>
-	T retrieve(const string& key, const T& def);
+	T retrieve(const string& key, const T& def) const;
 
 	//Assing a value to a key without casting the type
 	template<typename T>
@@ -52,5 +54,6 @@ public:
 	bool contains(const string key);
 };
 
+} // namespace rt
 
 #endif //PARAMSET_HPP
