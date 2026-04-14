@@ -5,13 +5,12 @@
 #include <unordered_map>
 
 #include "background.hpp"
-#include "camera.hpp"
+#include "film.hpp"
 #include "paramset.hpp"
 
 namespace rt {
 
 struct RenderOptions {
-  std::unique_ptr<Film> film;
   std::unique_ptr<Background> bkg;
   std::unordered_map<string, ParamSet> objects;
 };
@@ -19,18 +18,20 @@ struct RenderOptions {
 class API {
 public:
   enum APIState {
+    Uninitialized,
     Initializing,
     Setup,
     World,
   };
 
-  Background m_bkg;
-  Camera m_camera;
-  RenderOptions m_render_opts;
+  /// The infrastructure to render a scene (camera, integrator, etc.).
+  static std::unique_ptr<RenderOptions> m_render_options;
+  /// Current API state
+  static APIState m_api_state;
+  // Stores the CLI options that the 
   static RunningOptions m_run_options;
 
-  // stores the running options and initialize the API's internal states
-  // (graphics state)
+  // setup the ray tracer
   static void init_engine(const RunningOptions &opt);
   // calls the static function parse(opt.file_name)
   static void run();
