@@ -7,6 +7,7 @@
 
 #include "common.hpp"
 #include "paramset.hpp"
+#include "image.hpp"
 
 using std::unordered_map;
 using std::vector;
@@ -35,13 +36,16 @@ enum class FilmType_e {
   Resolution width() { return m_x_res; };
   Resolution height() { return m_y_res; };
 
-  void add(const Pixel& p, const RGBColor& c) const;
+  void add(const Pixel& p, const RGBColor& c);
   void write_image() const;
 
 private:
   // The matrix of pixels itself, starting from TL until BR
   ImageType_e m_img_type;
   FilmType_e m_film_type;
+
+  // Buffer who storage all the colors in the scene
+  std::vector<RGBColor> color_buffer;
 
   // The dimentions of the final image
   Resolution m_x_res;
