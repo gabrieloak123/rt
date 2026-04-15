@@ -1,6 +1,7 @@
 #include "film.hpp"
 #include "api.hpp"
 #include "common.hpp"
+#include "error.hpp"
 #include <array>
 #include <utility>
 

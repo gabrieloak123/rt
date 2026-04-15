@@ -8,7 +8,8 @@ int main(int argc, char *argv[]) {
   rt::Parser::validate_arguments(argc, argv, run_opt);
 
   rt::API::init_engine(run_opt);
-  rt::API::run();
+  rt::Parser::parse_scene(run_opt.scene);
+  rt::API::clean_up();
 
   return EXIT_SUCCESS;
 }

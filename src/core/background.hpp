@@ -2,9 +2,9 @@
 #define BACKGROUND_HPP
 
 #include <array>
-#include <vector>
 
 #include "common.hpp"
+#include "paramset.hpp"
 
 using d = double;
 using real_type = double;
@@ -12,31 +12,35 @@ using real_type = double;
 using std::array;
 
 enum BackgroundType_e {
-	COLORS = 0,
+  COLORS = 0,
 };
 
 namespace rt {
 
 class Background {
 public:
+  static constexpr byte max_channel_value{255};
   // Ctro receives a list of four colors, for each corner.
-  Background(const std::vector<RGBColor> &colors);
+  Background(const std::array<RGBColor, 4> &colors);
   // Dtro
-  ~Background();
+  ~Background() = default;
 
   // Sample and returns a color, based on the raster coordinate.
   RGBColor sample(real_type u, real_type v) const;
 
   void dummy();
+
 private:
   // Each corner has a color associated with.
   array<RGBColor, 4> m_corners;
   BackgroundType_e m_type;
 
   // Return the linearly interpolated color in [A;B], based on the parameter
-  RGBColor linear_interpolation(const RGBColor &A, const RGBColor &B, double t) const;
+  RGBColor linear_interpolation(const RGBColor &A, const RGBColor &B,
+                                double t) const;
 };
 
+Background *create_color_background(std::string_view type, const ParamSet &ps);
 } // namespace rt
 
-#endif //BACKGROUND_HPP
+#endif // BACKGROUND_HPP
