@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <memory>
 #include <sstream>
+#include <utility>
 
 #include "api.hpp"
 #include "common.hpp"
@@ -41,8 +42,7 @@ void API::run() {
 };
 
 // frees all the resources previously allocated
-void API::clean_up() {
-}
+void API::clean_up() {}
 
 /// Check whether the current state has been intialized.
 bool API::check_in_initialized_state(std::string_view func_name) {
@@ -109,9 +109,11 @@ void API::world_end(const ParamSet &ps) {
   // ===============================================================
   // For now, we create the film here but in the future it will be
   // instantiated somewhere else.
-  Film *film = make_film(m_render_options->objects["film"]);
+  std::unique_ptr<Film> film = make_film(m_render_options->objects["film"]);
   if (film == nullptr) {
     ERROR("API::setup_camera(): Unable to create film.");
+  } else {
+    m_render_options->film = std::move(film);
   }
 
   // The scene has already been parsed and properly set up. It's time to render
@@ -179,7 +181,7 @@ void API::render() {
   // -------------------------------------------------------------
   // The Film object holds the memory for the image.
 
-  auto& film =m_render_options->film;
+  auto &film = m_render_options->film;
   auto w = m_render_options->film->width();
   auto h = film->height();
   // -------------------------------------------------------------
@@ -198,8 +200,8 @@ void API::render() {
   m_render_options->film->write_image();
 }
 
-Film *API::make_film(const ParamSet &ps) {
-  Film *film{nullptr};
+std::unique_ptr<Film> API::make_film(const ParamSet &ps) {
+  std::unique_ptr<Film> film{nullptr};
   auto film_type = ps.retrieve<string>("type", "unknown");
   if (film_type == "image") {
     film = create_film(ps);

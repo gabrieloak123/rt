@@ -48,7 +48,7 @@ public:
   static void world_begin(const ParamSet &ps);
   static void world_end(const ParamSet &ps);
   static void film(const ParamSet &ps);
-  static Film *make_film(const ParamSet &ps);
+  static std::unique_ptr<Film> make_film(const ParamSet &ps);
 
 private:
   static bool check_in_initialized_state(std::string_view func_name);
