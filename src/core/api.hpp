@@ -11,8 +11,9 @@
 namespace rt {
 
 struct RenderOptions {
-  std::unique_ptr<Background> bkg;
+  std::unique_ptr<Background> background;
   std::unordered_map<string, ParamSet> objects;
+  std::unique_ptr<Film> film;
 };
 
 class API {
@@ -28,7 +29,7 @@ public:
   static std::unique_ptr<RenderOptions> m_render_options;
   /// Current API state
   static APIState m_api_state;
-  // Stores the CLI options that the 
+  // Stores the CLI options that the
   static RunningOptions m_run_options;
 
   // setup the ray tracer
@@ -47,7 +48,15 @@ public:
   static void world_begin(const ParamSet &ps);
   static void world_end(const ParamSet &ps);
   static void film(const ParamSet &ps);
-  static Film *make_film(const ParamSet &);
+  static std::unique_ptr<Film> make_film(const ParamSet &ps);
+
+private:
+  static bool check_in_initialized_state(std::string_view func_name);
+  static bool check_in_setup_block_state(std::string_view func_name);
+  static bool check_in_world_block_state(std::string_view func_name);
+
+  static void soft_engine_reset();
+  static void hard_engine_reset();
 };
 
 } // namespace rt

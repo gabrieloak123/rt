@@ -1,7 +1,12 @@
-#include "background.hpp"
+#include <array>
 #include <fstream>
+#include <iomanip>
+#include <sstream>
 
-using std::ofstream;
+#include "background.hpp"
+#include "common.hpp"
+#include "error.hpp"
+#include "paramset.hpp"
 
 const d width = 400;
 const d height = 200;
@@ -9,7 +14,7 @@ const d max = 255;
 
 namespace rt {
 
-Background::Background(const std::vector<RGBColor> &colors) {
+Background::Background(const std::array<RGBColor, 4> &colors) {
   for (size_t i = 0; i < 4; i++) {
     m_corners[i] = colors[i];
   }
@@ -35,7 +40,7 @@ RGBColor Background::sample(real_type u, real_type v) const {
 };
 
 void Background::dummy() {
-  ofstream img("out.ppm");
+	std::ofstream img("out.ppm");
 
   img << "P3" << "\n";
   img << width << " " << height << "\n";
@@ -54,4 +59,48 @@ void Background::dummy() {
   img.close();
 }
 
-} //namespace rt
+// @author = Selan Santos
+// ===
+Background *create_color_background(std::string_view type, const ParamSet &ps) {
+  // List of name ids for each corner of the background.
+  std::array<std::string, 4> corner_name{"tl", "bl", "br", "tr"};
+  RGBColor black = RGBColor{0, 0, 0};
+
+  // Possible colored background types: single_color, 4_colors.
+  if (type == "single_color") {
+    // The tag:
+    // <background type="single_color" color="153 204 255"/>
+    // default color is black
+    RGBColor single_color{ps.retrieve<RGBColor>("color", black)};
+    return new Background(
+        {single_color, single_color, single_color, single_color});
+  }
+  if (type == "4_colors") {
+    // List of color from the scene to be passed onto the constructor.
+    std::array<RGBColor, 4> color_list;
+    // The tag:
+    // <background type="4_colors"  bl="0 0 51" tl="0 255 51" tr="255 255 51"
+    // br="255 0 51" />
+    size_t idx{0};
+    for (const auto &label : corner_name) {
+      // black by default again
+      RGBColor color{ps.retrieve<RGBColor>(label, black)};
+      color_list[idx++] = RGBColor{
+          static_cast<byte>(color.red / Background::max_channel_value),
+          static_cast<byte>(color.green / Background::max_channel_value),
+          static_cast<byte>(color.blue / Background::max_channel_value)};
+    }
+    return new Background(color_list);
+  }
+  // If we got here it means we received an invalid colored background
+  // specification.
+  std::ostringstream oss;
+  oss << "create_color_background(): Unknown type of colored background "
+         "specified "
+      << std::quoted(type) << ", using black background.";
+  WARNING(oss.str());
+  return new Background({black, black, black, black});
+}
+// ===
+
+} // namespace rt

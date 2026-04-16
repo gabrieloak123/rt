@@ -1,7 +1,9 @@
 #include "film.hpp"
 #include "api.hpp"
 #include "common.hpp"
+#include "error.hpp"
 #include <array>
+#include <memory>
 #include <utility>
 
 namespace rt {
@@ -33,8 +35,8 @@ string handles_filename(const ParamSet &ps) {
 std::pair<Resolution, Resolution> handles_dimensions(const ParamSet &ps) {
   std::pair<Resolution, Resolution> dimensions;
 
-  dimensions = {ps.retrieve<uint16_t>("w_res", 1280),
-                ps.retrieve<int>("h_res", 720)};
+  dimensions = {ps.retrieve<int>("x_res", 1280),
+                ps.retrieve<int>("y_res", 720)};
   // Quick render?
   if (API::m_run_options.quick) {
     // decrease resolution.
@@ -45,7 +47,7 @@ std::pair<Resolution, Resolution> handles_dimensions(const ParamSet &ps) {
 }
 
 /// Creates and returns a `Film` objected based on the `ParamSet` provided.
-Film *create_film(const ParamSet &ps) {
+std::unique_ptr<Film> create_film(const ParamSet &ps) {
 #ifdef DEBUG
   std::cout << ">>> Inside create_film()\n";
 #endif
@@ -97,7 +99,8 @@ Film *create_film(const ParamSet &ps) {
   std::cout << "================================================\n";
 #endif
 
-  return new Film(dimensions.first, dimensions.second, filename, film_type,
+
+  return std::make_unique<Film>(dimensions.first, dimensions.second, filename, film_type,
                   img_type, apply_gamma_correction);
 }
 } // namespace rt

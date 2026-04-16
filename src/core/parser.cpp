@@ -64,6 +64,7 @@ void Parser::validate_arguments(int argc, char **argv,
   string input_scene;
   vector<u_int16_t> crop_window;
   bool quick = false;
+  bool verbose = false;
   string outfile;
 
   opts.add_option("<input_scene_file>", input_scene, "")
@@ -98,6 +99,8 @@ void Parser::validate_arguments(int argc, char **argv,
   opts.add_flag("--quick,-q", quick,
                 "Reduces quality parameters to render image quickly.");
 
+  opts.add_flag("--verbose", verbose,
+                "Prints some internal info.");
   try {
     opts.parse(argc, argv);
   } catch (const CLI::ParseError &e) {
@@ -106,6 +109,7 @@ void Parser::validate_arguments(int argc, char **argv,
 
   run_opt.scene = input_scene;
   run_opt.quick = quick;
+  run_opt.verbose = verbose;
   run_opt.outfile = outfile;
 
   if (*crop_opt) {
@@ -322,7 +326,7 @@ std::unordered_map<string, ConverterFunction> converters{
  * This function checks if the tag received is valid.
  * @param tag_name The tag name we want to validate.
  */
-bool Pais_valid_tag(std::string_view tag_name) {
+bool is_valid_tag(std::string_view tag_name) {
   // Check if we have a valid registered tag name.
   auto tag_query{ tag_catalog.find((string)tag_name) };
   return tag_query != tag_catalog.end();
