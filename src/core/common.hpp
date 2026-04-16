@@ -19,9 +19,9 @@ using std::string;
 
 // Corner indexes.
 enum Corners_e {
-  TOP_LEFT = 0,
+  BOTTOM_LEFT = 0,
+  TOP_LEFT,
   TOP_RIGHT,
-  BOTTOM_LEFT,
   BOTTOM_RIGHT,
 };
 
@@ -48,15 +48,9 @@ struct RGBColor {
   RGBColor() : red(0), green(0), blue(0) {};
   RGBColor(byte red, byte green, byte blue) : red(red), green(green), blue(blue) {};
 
-  RGBColor operator*(float t){
-    return RGBColor( static_cast<byte>(t * red),
-                     static_cast<byte>(t * green),
-                     static_cast<byte>(t * blue)
-    );
-  };
   
   RGBColor operator+(const RGBColor& c){return RGBColor(red + c.red, green + c.green, blue + c.blue);};
-  
+
   byte&    operator[](const size_t index){
     if(index == 0)return red;
     if(index == 1)return green;
