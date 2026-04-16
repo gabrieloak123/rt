@@ -35,6 +35,7 @@ struct Pixel {
 struct RunningOptions {
 	std::optional<array<Pixel,2>> crop_region;
 	bool quick{false};
+	bool verbose{false};
 	string outfile = "";
 	string scene;
 };

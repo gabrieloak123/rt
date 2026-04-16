@@ -1,6 +1,7 @@
 #ifndef FILM_HPP
 #define FILM_HPP
 
+#include <memory>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -58,7 +59,7 @@ private:
 // @author = Selan Santos
 // ===
 /// Factory creation
-Film* create_film(const ParamSet& ps);
+std::unique_ptr<Film> create_film(const ParamSet& ps);
 string handles_filename(const ParamSet& ps);
 // gc::Bounds2f handles_cropwindow(const ParamSet& ps);
 std::pair<Resolution, Resolution> handles_dimensions(const ParamSet& ps);
