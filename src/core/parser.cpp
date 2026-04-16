@@ -7,10 +7,9 @@
 #include <CLI11/CLI11.hpp>
 
 #include "common.hpp"
-#include "parser.hpp"
-#include "paramset.hpp"
 #include "error.hpp"
-
+#include "paramset.hpp"
+#include "parser.hpp"
 
 void print(vector<string> v) {
   for (auto s : v) {
@@ -69,13 +68,15 @@ void Parser::validate_arguments(int argc, char **argv,
 
   opts.add_option("<input_scene_file>", input_scene, "")
       ->required()
+      ->type_name("")
       ->check(CLI::ExistingFile)
       ->check(XMLValidator);
 
   auto crop_opt = opts.add_option("--window,-w", crop_window,
                                   "Specify an image crop window.")
                       ->check(CLI::Range(0, 65535))
-                      ->expected(4);
+                      ->expected(4)
+                      ->type_name("x1 y1 x2 y2");
   if (*crop_opt) {
     if (crop_window.size() != 4) {
       throw std::runtime_error("Crop window must have 4 values");
@@ -94,13 +95,13 @@ void Parser::validate_arguments(int argc, char **argv,
   }
   opts.add_option("--outfile,-o", outfile,
                   "Write the rendered image to <filename>.")
+      ->type_name("<filename>")
       ->check(ImageFormatValidator);
 
   opts.add_flag("--quick,-q", quick,
                 "Reduces quality parameters to render image quickly.");
 
-  opts.add_flag("--verbose", verbose,
-                "Prints some internal info.");
+  opts.add_flag("--verbose", verbose, "Prints some internal info.");
   try {
     opts.parse(argc, argv);
   } catch (const CLI::ParseError &e) {
@@ -118,6 +119,7 @@ void Parser::validate_arguments(int argc, char **argv,
   } else {
     run_opt.crop_region.reset();
   }
+  opts.get_formatter()->column_width(40);
 }
 
 // @author = Selan Santos
@@ -126,57 +128,67 @@ void Parser::validate_arguments(int argc, char **argv,
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <vector>
 #include <string_view>
 #include <type_traits>
 #include <unordered_map>
+#include <vector>
 
 namespace fs = std::filesystem;
 
-
 /// Generic convertion function.
 /*!
- * This function receives a string,`attr_content`, that may contain one or more instances of type
- * `T`, and tries to convert this string into a list of actual elements of type `T`.
+ * This function receives a string,`attr_content`, that may contain one or more
+ * instances of type `T`, and tries to convert this string into a list of actual
+ * elements of type `T`.
  *
- * In case there is only one instance of T, that instance is stored in the ParamSet object `ps`,
- * passed as output parameter. If there are more than one instance of T, the function extracts them
- * into a `std::vector<T>` and stores the vector in `ps`.
+ * In case there is only one instance of T, that instance is stored in the
+ * ParamSet object `ps`, passed as output parameter. If there are more than one
+ * instance of T, the function extracts them into a `std::vector<T>` and stores
+ * the vector in `ps`.
  *
- * Therefore, the output of this function is the ParamSet object `ps` that contains either a
- * single instance of T or a vector<T> with multiples instances of T, found in `attr_content`.
+ * Therefore, the output of this function is the ParamSet object `ps` that
+ * contains either a single instance of T or a vector<T> with multiples
+ * instances of T, found in `attr_content`.
  *
- * Example: convert("h_res", "1920", ps), here the attribute "h_res" should become an integer.
- * The function inserts ps->m_map["h_res"]=1920 (`int`), in the ParamSet object `ps`.
+ * Example: convert("h_res", "1920", ps), here the attribute "h_res" should
+ * become an integer. The function inserts ps->m_map["h_res"]=1920 (`int`), in
+ * the ParamSet object `ps`.
  *
- * @param attr_name The attribute name that will be associated with the value in the ParamSet.
- * @param attr_content The string attribute value (or values) we wish to convert.
+ * @param attr_name The attribute name that will be associated with the value in
+ * the ParamSet.
+ * @param attr_content The string attribute value (or values) we wish to
+ * convert.
  * @param[out] ps The output ParamSet object (dictionary).
  *
  * @return true if convertion worked, false otherwise.
  */
 
 template <typename T>
-bool convert(const string& attr_name, const string& attr_content, ParamSet* ps) {
+bool convert(const string &attr_name, const string &attr_content,
+             ParamSet *ps) {
   // assert(ps);
-  std::istringstream iss{ attr_content };      // Make `attr_content` a stream to extract data from.
-  T single_value{};                            // Stores a single value of type T...
-  vector<T> multiple_values;              // ... or use this to try to store multiple values.
-  bool input_string_still_has_values{ true };  // Assume we have values to read from.
+  std::istringstream iss{
+      attr_content}; // Make `attr_content` a stream to extract data from.
+  T single_value{};  // Stores a single value of type T...
+  vector<T> multiple_values; // ... or use this to try to store multiple values.
+  bool input_string_still_has_values{
+      true}; // Assume we have values to read from.
   // [1]: Try to read several T-values from the input string `attr_content`.
   while (input_string_still_has_values and not iss.eof()) {
     // Slightly different treatment if T is bool
     if constexpr (std::is_same_v<T, bool>) {
-      iss >> std::boolalpha >> single_value;  // Use std::boolalpha to read "true" ou "false"
+      iss >> std::boolalpha >>
+          single_value; // Use std::boolalpha to read "true" ou "false"
     } else {
-      iss >> single_value;  // Regular extraction.
+      iss >> single_value; // Regular extraction.
     }
     // Failed while trying to extract value this time?
     if (iss.fail()) {
-      if (multiple_values.empty()) {  // Is it completely empty?
-        return false;                 // Failed! The input was empty all along.
+      if (multiple_values.empty()) { // Is it completely empty?
+        return false;                // Failed! The input was empty all along.
       }
-      // If we got here, at least one value was successfully extracted from `attr_content`
+      // If we got here, at least one value was successfully extracted from
+      // `attr_content`
       input_string_still_has_values = false;
       break;
     }
@@ -184,8 +196,9 @@ bool convert(const string& attr_name, const string& attr_content, ParamSet* ps) 
     // Store the single value into a vector & look for more.
     multiple_values.push_back(single_value);
   }
-  // [2]: If we found only one value in the vector, we get rid of the vector and store this single
-  // value in the ParamSet. Otherwise, we store the entire vector.
+  // [2]: If we found only one value in the vector, we get rid of the vector and
+  // store this single value in the ParamSet. Otherwise, we store the entire
+  // vector.
   if (multiple_values.size() == 1) {
     single_value = multiple_values[0];
     ps->assign(attr_name, single_value);
@@ -196,53 +209,60 @@ bool convert(const string& attr_name, const string& attr_content, ParamSet* ps) 
 }
 
 /*!
- * This function will extract all the instances of **composite elements** present in the input
- * string `attr_content`. A composite element is a homogeneous n-tuple of 2, 3 or 4 values of the
- * same type, such as Point3f, Vector2i, or Normal3f, for instance.
+ * This function will extract all the instances of **composite elements**
+ * present in the input string `attr_content`. A composite element is a
+ * homogeneous n-tuple of 2, 3 or 4 values of the same type, such as Point3f,
+ * Vector2i, or Normal3f, for instance.
  *
  * @note
- * The composite type T **must have** the operator[]() implemented for this function to work.
+ * The composite type T **must have** the operator[]() implemented for this
+ * function to work.
  *
  * @note
- * If the function finds only one instance of the composite element, then we store a single
- * value directly in the ParamSet, rather then a vector with just one instance.
+ * If the function finds only one instance of the composite element, then we
+ * store a single value directly in the ParamSet, rather then a vector with just
+ * one instance.
  *
  * @tparam T The basic type of the composit element.
  * @tparam N How many individual values each composite element has.
  * @param attr_name The attribute name.
  * @param attr_content The string attribute value we wish to convert.
  * @param[out] ps The output gc::ParamSet object.
- * @return A vector with all the composite elements extracted or no-value if none is available.
+ * @return A vector with all the composite elements extracted or no-value if
+ * none is available.
  *
  * Example: A `Vector3f` has 3 elements of type `float`.
- * bl="255 255 51" will be stored as ps->m_map["bl"]=Color24(255,255,51) in the `ParamSet` `ps`.
+ * bl="255 255 51" will be stored as ps->m_map["bl"]=Color24(255,255,51) in the
+ * `ParamSet` `ps`.
  */
 template <typename T, std::uint16_t N>
-bool convert(const string& attr_name, const string& attr_content, ParamSet* ps) {
+bool convert(const string &attr_name, const string &attr_content,
+             ParamSet *ps) {
   // assert(ps);
-  std::istringstream iss{ attr_content };
+  std::istringstream iss{attr_content};
   vector<T> multiple_composite_values;
   T single_composite_value{};
-  bool input_string_still_has_values{ true };
+  bool input_string_still_has_values{true};
   // [1] Keep reading groups of N values from the input string.
   while (input_string_still_has_values and not iss.eof()) {
     // Try to extract a N-tuple from the string.
-    for (std::uint16_t idx{ 0 }; idx < N; ++idx) {
-      iss >> single_composite_value[idx];  // Try to extract a value.
+    for (std::uint16_t idx{0}; idx < N; ++idx) {
+      iss >> single_composite_value[idx]; // Try to extract a value.
       // Failed while extracting value this time around?
       if (iss.fail()) {
-        if (multiple_composite_values.empty()) {  // Completely empty?
-          return false;                           // then, there is nothing to return.
+        if (multiple_composite_values.empty()) { // Completely empty?
+          return false; // then, there is nothing to return.
         }
         input_string_still_has_values = false;
-        break;  // There is something in the vector.
+        break; // There is something in the vector.
       }
     }
     // Add the newly extracted composite item to the result vector.
     multiple_composite_values.push_back(single_composite_value);
   }
-  // [2] If we found only one value in the vector, we get rid of the vector and store this single
-  // value in the ParamSet. Otherwise, we store the entire vector.
+  // [2] If we found only one value in the vector, we get rid of the vector and
+  // store this single value in the ParamSet. Otherwise, we store the entire
+  // vector.
   if (multiple_composite_values.size() == 1) {
     single_composite_value = multiple_composite_values[0];
     ps->assign(attr_name, single_composite_value);
@@ -252,74 +272,75 @@ bool convert(const string& attr_name, const string& attr_content, ParamSet* ps) 
   return true;
 }
 
-/// This is the list of all supported tags and their corresponding attributes/type.
+/// This is the list of all supported tags and their corresponding
+/// attributes/type.
 std::unordered_map<string, vector<string>> tag_catalog{
-  {
-    "background",
     {
-      "type",
-      "filename",
-      "mapping",
-      "color",
-      "tl",
-      "tr",
-      "bl",
-      "br",
+        "background",
+        {
+            "type",
+            "filename",
+            "mapping",
+            "color",
+            "tl",
+            "tr",
+            "bl",
+            "br",
+        },
     },
-  },
-  {
-    "film",
     {
-      "type",
-      "filename",
-      "img_type",
-      "x_res",
-      "y_res",
-      "w_res",
-      "h_res",
-      "crop_window",
-      "gamma_corrected",
+        "film",
+        {
+            "type",
+            "filename",
+            "img_type",
+            "x_res",
+            "y_res",
+            "w_res",
+            "h_res",
+            "crop_window",
+            "gamma_corrected",
+        },
     },
-  },
-  {
-    "world_begin",
-    { "" },  // no attributes
-  },
-  {
-    "world_end",
-    { "" },  // no attributes
-  },
+    {
+        "world_begin",
+        {""}, // no attributes
+    },
+    {
+        "world_end",
+        {""}, // no attributes
+    },
 };
 
 /// Maps the tag name to its corresponding API function.
-std::unordered_map<string, std::function<void(const ParamSet&)>> api_functions{
-  { "background", API::background },
-  { "world_begin", API::world_begin },
-  { "world_end", API::world_end },
-  { "film", API::film },
+std::unordered_map<string, std::function<void(const ParamSet &)>> api_functions{
+    {"background", API::background},
+    {"world_begin", API::world_begin},
+    {"world_end", API::world_end},
+    {"film", API::film},
 };
 
 /// Maps convertion function to an attribute name.
 std::unordered_map<string, ConverterFunction> converters{
-  { "type", convert<string> },  // "type" must be a string.
-  { "name", convert<string> },  // "name" must be a string.
-  //
-  { "color", convert<RGBColor> },  // "color" is a Color24 with 3 fields.
-  { "flip", convert<bool> },
-  // Background attributes.
-  { "mapping", convert<string> },
-  { "bl", convert<RGBColor> },
-  { "tl", convert<RGBColor> },
-  { "tr", convert<RGBColor> },
-  { "br", convert<RGBColor> },
-  // Image attributes
-  { "x_res", convert<int> },
-  { "y_res", convert<int> },
-  { "w_res", convert<int> },
-  { "h_res", convert<int> },
-  { "filename", convert<string> },
-  { "img_type", convert<string> },
-  { "gamma_corrected", convert<bool> },
+    {"type", convert<string>}, // "type" must be a string.
+    {"name", convert<string>}, // "name" must be a string.
+    //
+    {"color", convert<RGBColor>}, // "color" is a Color24 with 3 fields.
+    {"flip", convert<bool>},
+    // Background attributes.
+    {"mapping", convert<string>},
+    {"bl", convert<RGBColor>},
+    {"tl", convert<RGBColor>},
+    {"tr", convert<RGBColor>},
+    {"br", convert<RGBColor>},
+    // Image attributes
+    {"x_res", convert<int>},
+    {"y_res", convert<int>},
+    {"w_res", convert<int>},
+    {"h_res", convert<int>},
+    {"filename", convert<string>},
+    {"img_type", convert<string>},
+    {"gamma_corrected", convert<bool>},
 };
 
 /*!
@@ -328,7 +349,7 @@ std::unordered_map<string, ConverterFunction> converters{
  */
 bool is_valid_tag(std::string_view tag_name) {
   // Check if we have a valid registered tag name.
-  auto tag_query{ tag_catalog.find((string)tag_name) };
+  auto tag_query{tag_catalog.find((string)tag_name)};
   return tag_query != tag_catalog.end();
 }
 
@@ -338,27 +359,30 @@ bool is_valid_tag(std::string_view tag_name) {
  * @param tag_name A valid tag name.
  * @attribute_name The attribute name we want to validate.
  */
-bool is_valid_attribute(std::string_view tag_name, std::string_view attribute_name) {
+bool is_valid_attribute(std::string_view tag_name,
+                        std::string_view attribute_name) {
   // Get the attribute list associated with `tag_name`.
-  auto attribute_list{ tag_catalog[(string)tag_name] };
-  auto attr_query = std::find(attribute_list.begin(), attribute_list.end(), attribute_name);
+  auto attribute_list{tag_catalog[(string)tag_name]};
+  auto attr_query =
+      std::find(attribute_list.begin(), attribute_list.end(), attribute_name);
   return attr_query != attribute_list.end();
 }
 
 /*!
- * This function invokes a converter function that translates the attribute content (as a string)
- * into the expected type and store it into the gc::ParamSet object received as input argument.
+ * This function invokes a converter function that translates the attribute
+ * content (as a string) into the expected type and store it into the
+ * gc::ParamSet object received as input argument.
  * @param attr_name The attribute name.
  * @param attr_content The attribute value as a string.
  * @param ps A reference to the current gc::ParamSet object we are filling in.
  */
-void parse_attribute(const string& attr_name /* IN value */,
-                     const string& attr_content /* IN value */,
-                     ParamSet* ps /* OUT value*/) {
+void parse_attribute(const string &attr_name /* IN value */,
+                     const string &attr_content /* IN value */,
+                     ParamSet *ps /* OUT value*/) {
   std::ostringstream oss;
   // Find the proper convertion function.
   auto converter_func = converters[attr_name];
-  if (converter_func) {  // Do we have one defined?
+  if (converter_func) { // Do we have one defined?
     if (converter_func(attr_name, attr_content, ps)) {
       oss << " ⁺ Successfuly converted attribute " << std::quoted(attr_name);
       MESSAGE(oss.str());
@@ -367,8 +391,8 @@ void parse_attribute(const string& attr_name /* IN value */,
       MESSAGE(oss.str());
     }
   } else {
-    oss << " - Could not find a convertion function for the tag " << std::quoted(attr_name)
-        << ". Skipping...";
+    oss << " - Could not find a convertion function for the tag "
+        << std::quoted(attr_name) << ". Skipping...";
     WARNING(oss.str());
   }
 }
@@ -385,15 +409,15 @@ void Parser::parse_scene(const string filename) {
   }
 
   // [2] Get the Root node
-  tinyxml2::XMLElement* root = doc.RootElement();
+  tinyxml2::XMLElement *root = doc.RootElement();
   if (root == nullptr) {
     std::cerr << "Root node of the XML tree was not found!" << '\n';
     return;
   }
 
   // [3] Iterate over every child elements, i.e. over every tag.
-  for (tinyxml2::XMLElement* child_node = root->FirstChildElement(); child_node != nullptr;
-       child_node = child_node->NextSiblingElement()) {
+  for (tinyxml2::XMLElement *child_node = root->FirstChildElement();
+       child_node != nullptr; child_node = child_node->NextSiblingElement()) {
     // ================================================================================
     // Validate the current tag name.
     // --------------------------------------------------------------------------------
@@ -402,7 +426,7 @@ void Parser::parse_scene(const string filename) {
       std::ostringstream oss;
       oss << "The tag " << std::quoted(tag_name) << " is not valid!";
       WARNING(oss.str());
-      continue;  // Skip to the next tag in the scene file.
+      continue; // Skip to the next tag in the scene file.
     }
     {
       std::ostringstream oss;
@@ -410,29 +434,34 @@ void Parser::parse_scene(const string filename) {
       MESSAGE(oss.str());
     }
     // ================================================================================
-    // At this point we have a valid tag name. Now we need to validate its attributes.
+    // At this point we have a valid tag name. Now we need to validate its
+    // attributes.
     // --------------------------------------------------------------------------------
-    // Create the empty gc::ParamSet object to store the attributes we will process next.
+    // Create the empty gc::ParamSet object to store the attributes we will
+    // process next.
     ParamSet ps;
     // Iterate over this tag's attributes
-    for (const tinyxml2::XMLAttribute* attr = child_node->FirstAttribute(); attr != nullptr;
-         attr = attr->Next()) {
+    for (const tinyxml2::XMLAttribute *attr = child_node->FirstAttribute();
+         attr != nullptr; attr = attr->Next()) {
       // Validate the current attribute name.
-      string attribute_name{ str_to_lower(attr->Name()) };
+      string attribute_name{str_to_lower(attr->Name())};
       if (not is_valid_attribute(tag_name, attribute_name)) {
         std::ostringstream oss;
-        oss << "The tag " << std::quoted(tag_name) << " does not have an attribute "
-            << std::quoted(attribute_name) << ". Ignoring...";
+        oss << "The tag " << std::quoted(tag_name)
+            << " does not have an attribute " << std::quoted(attribute_name)
+            << ". Ignoring...";
         WARNING(oss.str());
-        continue;  // Skip to the next attribute inside this tag.
+        continue; // Skip to the next attribute inside this tag.
       }
       // Parse the string version of this attribute into its expected value.
-      // The result is stored inside the gc::ParamSet object, passed in as the last argument.
-      string attribute_value{ str_to_lower(attr->Value()) };
+      // The result is stored inside the gc::ParamSet object, passed in as the
+      // last argument.
+      string attribute_value{str_to_lower(attr->Value())};
       parse_attribute(attribute_name, attribute_value, /*OUT value*/ &ps);
     }
     // ================================================================================
-    // Now we have gc::ParamSet object filled in and ready to be passed along to the API.
+    // Now we have gc::ParamSet object filled in and ready to be passed along to
+    // the API.
     // ================================================================================
     // ============================================================================
     /// HACK: If the tag is `include` we call `parse_scene_file()` recursively.
@@ -443,14 +472,15 @@ void Parser::parse_scene(const string filename) {
         WARNING("Missing attribute \"filename\" in tag \"include\"");
         continue;
       }
-      if (not fs::exists(fs::path{ filename.c_str() })) {
+      if (not fs::exists(fs::path{filename.c_str()})) {
         std::ostringstream oss;
         oss << "Included file " << std::quoted(filename) << " does not exist.";
         ERROR(oss.str());
       }
       // Recursive call to process subfile.
       parse_scene(filename.c_str());
-      continue;  // This tag doesn't have an API function associated with; get next tag.
+      continue; // This tag doesn't have an API function associated with; get
+                // next tag.
     }
     // ============================================================================
 
@@ -458,14 +488,16 @@ void Parser::parse_scene(const string filename) {
     if (api_functions.count(tag_name) == 0) {
       std::ostringstream oss;
       oss << "The tag " << std::quoted(tag_name)
-          << " does not have a corresponding API function associated with. Ignoring...";
+          << " does not have a corresponding API function associated with. "
+             "Ignoring...";
       WARNING(oss.str());
       continue;
     }
 
     {
       std::ostringstream oss;
-      oss << "<<<<< Calling API function for the tag " << std::quoted(tag_name) << ".\n";
+      oss << "<<<<< Calling API function for the tag " << std::quoted(tag_name)
+          << ".\n";
       MESSAGE(oss.str());
     }
     // Call the api function associated with the tag name.
