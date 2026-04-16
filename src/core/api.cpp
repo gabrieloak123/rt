@@ -182,7 +182,7 @@ void API::render() {
   // The Film object holds the memory for the image.
 
   auto &film = m_render_options->film;
-  auto w = m_render_options->film->width();
+  auto w = film->width();
   auto h = film->height();
   // -------------------------------------------------------------
   // Traverse all pixels to shoot rays from.
