@@ -32,8 +32,8 @@ public:
 
 private:
   // Each corner has a color associated with.
-  array<RGBColor, 4> m_corners;
-  BackgroundType_e m_type;
+  array<RGBColor, 4> m_corners{RGBColor(), RGBColor(), RGBColor(), RGBColor()};
+  BackgroundType_e m_type{};
 
   // Return the linearly interpolated color in [A;B], based on the parameter
   RGBColor linear_interpolation(const RGBColor &A, const RGBColor &B,

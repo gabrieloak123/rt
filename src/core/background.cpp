@@ -64,7 +64,7 @@ void Background::dummy() {
 Background *create_color_background(std::string_view type, const ParamSet &ps) {
   // List of name ids for each corner of the background.
   std::array<std::string, 4> corner_name{"tl", "bl", "br", "tr"};
-  RGBColor black = RGBColor{0, 0, 0};
+  RGBColor black = RGBColor();
 
   // Possible colored background types: single_color, 4_colors.
   if (type == "single_color") {
@@ -86,9 +86,9 @@ Background *create_color_background(std::string_view type, const ParamSet &ps) {
       // black by default again
       RGBColor color{ps.retrieve<RGBColor>(label, black)};
       color_list[idx++] = RGBColor{
-          static_cast<byte>(color.red / Background::max_channel_value),
-          static_cast<byte>(color.green / Background::max_channel_value),
-          static_cast<byte>(color.blue / Background::max_channel_value)};
+          static_cast<byte>(color.red ),
+          static_cast<byte>(color.green ),
+          static_cast<byte>(color.blue)};
     }
     return new Background(color_list);
   }
