@@ -8,20 +8,22 @@ namespace rt {
 
 /// Saves an image as a **binary** PPM file.
 bool save_ppm6(const std::vector<RGBColor> data,
-               size_t w,
-               size_t h,
-               size_t d,
-               const std::string& file_name_) {
+               Resolution w,
+               Resolution h,
+               const std::string& file_name_,
+               Resolution d
+                ) {
   // TODO:
+
   return true;  // STUB
 }
 
 /// Saves an image as a **ascii** PPM file.
 bool save_ppm3(const std::vector<RGBColor> data,
-               size_t w,
-               size_t h,
-               size_t d,
-               const std::string& file_name_) {
+               Resolution w,
+               Resolution h,
+               const std::string& file_name_,
+               Resolution d) {
 
   std::ofstream ofs(file_name_);
 
@@ -40,10 +42,10 @@ bool save_ppm3(const std::vector<RGBColor> data,
 }
 
 bool save_png(const std::vector<RGBColor> data,
-              size_t w,
-              size_t h,
-              size_t d,
-              const std::string& file_name_) {
+              Resolution w,
+              Resolution h,
+              const std::string& file_name_,
+              Resolution d) {
   
   std::vector<std::uint8_t> img;
   img.reserve(w * h * 4);
