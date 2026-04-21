@@ -48,8 +48,10 @@ template<typename T>
               * @param e2 Valor da componente Z (ou B).
               */
             
-            /* Acesso de Coordenadas Espaciais */
             constexpr vec3(T e0, T e1, T e2) : e{e0, e1, e2}{};
+            constexpr vec3(vec3<T>& vec) : e{vec[0], vec[1], vec[2]} {};
+
+            /* Acesso de Coordenadas Espaciais */
             constexpr T x() const {return e[0];};
             constexpr T y() const {return e[1];};
             constexpr T z() const {return e[2];};
