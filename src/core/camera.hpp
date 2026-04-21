@@ -63,7 +63,7 @@ private:
 	CameraType_e m_type;	   		 //< Stores the current projection type.
 
 	Mat4 m_camera_to_world; 	     //< Matrix that transforms from camera space to world space.
-	Mat4 m_raster_to_screen; //< Matrix that transforms from pixel coordinates to the camera screen.
+	Mat4 m_raster_to_screen; 		 //< Matrix that transforms from pixel coordinates to the camera screen.
 	Point3 m_origin;				 //< Camera position.
 	Vec3 m_gaze_dir;				 //< Gaze direction.
 	double m_focal_distance;		 //< Focal distance used in perspective projection.

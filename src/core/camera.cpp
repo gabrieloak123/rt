@@ -47,7 +47,7 @@ namespace rt {
                 return Ray(Point3(origin4d[0], origin4d[1], origin4d[2]), m_gaze_dir); //< Return a ray who travel parallel to the gaze direction
             }
 
-            case CameraType_e::PERSPECTIVE: //< Case Perspective
+            default: //< Case Perspective
             {
                 p_camera[2] = m_focal_distance; //< Push the target point on the screen to world space.
                 Point4 target4d{m_camera_to_world * p_camera}; //< Convert the target point to world space.
