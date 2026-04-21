@@ -13,7 +13,27 @@ bool save_ppm6(const std::vector<RGBColor> data,
                const std::string& file_name_,
                Resolution d
                 ) {
-  // TODO:
+  std::ofstream ofs(file_name_, std::ios::out | std::ios::binary);
+
+  if(!ofs.is_open()){
+    std::cerr << "Error on create the file" + file_name_ << '\n';
+    return false;
+  }
+
+  ofs << "P6\n" << w << ' ' << h << '\n';
+  ofs << "255\n";
+
+  std::vector<char> buffer;
+  buffer.reserve(w * h * 3);
+
+  for(const auto& color : data){
+    buffer.push_back(static_cast<char>(color.red));
+    buffer.push_back(static_cast<char>(color.green));
+    buffer.push_back(static_cast<char>(color.blue));
+  }
+
+  ofs.write(buffer.data(), buffer.size());
+  ofs.close();
 
   return true;  // STUB
 }
@@ -28,7 +48,7 @@ bool save_ppm3(const std::vector<RGBColor> data,
   std::ofstream ofs(file_name_);
 
   if(!ofs.is_open()){
-    std::cerr << "Error: on create the file " + file_name_ << '\n';
+    std::cerr << "Error on create the file " + file_name_ << '\n';
     return false;
   }
   ofs << "P3\n" << w << ' ' << h << "\n255\n";
