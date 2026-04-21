@@ -21,6 +21,8 @@
 #include <cstdint>
 #include <fstream>
 
+#include "vec3.hpp"
+
 using size_t = std::size_t;
 
 /**
@@ -53,16 +55,31 @@ template<typename T>
             */
             constexpr vec4(T e0, T e1, T e2, T e3) : e{e0, e1, e2, e3} {};
 
+            /**
+            * @brief Construtor parametrizado
+            * @param vec Vetor com os componentes XYZW (ou RGBA).
+            */
+            constexpr vec4(vec4<T>& vec) : e{vec[0], vec[1], vec[2], vec[3]}{};
+
+            /**
+            * @brief Construtor parametrizado
+            * @param vec Vetor com os componentes XYZ (ou RGB).
+            * @param e3 Valor do componente W (ou A)
+            */
+            constexpr vec4(vec3<T> vec, T e3) : e{vec[0], vec[1], vec[2], e3}{};  
+
             /* Acesso de coordenadas espaciais */
             constexpr T x() const {return e[0];};
             constexpr T y() const {return e[1];};
             constexpr T z() const {return e[2];};
+            constexpr vec3<T> xyz() const {return vec3<T>(e[0], e[1], e[2]);};
             constexpr T w() const {return e[3];};
 
             /* Acesso de cor RGBA*/
             constexpr T r() const {return e[0];};
             constexpr T g() const {return e[1];};
             constexpr T b() const {return e[2];};
+            constexpr vec3<T> rgb() const {return vec3<T>(e[0], e[1], e[2]);};
             constexpr T a() const {return e[3];};
 
             /** @brief Retorna o próprio vetor */
