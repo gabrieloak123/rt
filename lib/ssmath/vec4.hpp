@@ -23,7 +23,7 @@
 
 #include "vec3.hpp"
 
-using size_t = std::size_t;
+using std::size_t;
 
 /**
   *
@@ -150,6 +150,19 @@ template<typename T>
                 e[2] = v2.e[2];
                 e[3] = v2.e[3];
                 return *this;
+            }
+
+            /**
+              * @brief Verifica se dois vetores são *ESTRITAMENTE* iguais
+              * @param v2 Vetor que a comparação será feita
+              * @return bool Valor correspondente à comparação
+              */
+            constexpr bool operator==(const vec4<T> &v2){
+				return
+                e[0] == v2.e[0] &
+                e[1] == v2.e[1] &
+                e[2] == v2.e[2] &
+                e[3] == v2.e[3];
             }
 
             /**
