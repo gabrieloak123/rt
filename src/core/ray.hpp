@@ -1,9 +1,9 @@
 #ifndef RAY_HPP
 #define RAY_HPP
 
-#include "ssmath/ssmath.hpp"
-
 #include <cmath>
+
+#include "ssmath/ssmath.hpp"
 
 using Point3 = vec3<double>;
 using Vector3 = vec3<double>;
