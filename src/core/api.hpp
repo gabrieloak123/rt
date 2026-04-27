@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "background.hpp"
+#include "camera.hpp"
 #include "film.hpp"
 #include "paramset.hpp"
 
@@ -13,7 +14,7 @@ namespace rt {
 struct RenderOptions {
   std::unique_ptr<Background> background;
   std::unordered_map<string, ParamSet> objects;
-  std::unique_ptr<Film> film;
+  std::unique_ptr<Camera> camera;
 };
 
 class API {
@@ -41,6 +42,7 @@ public:
   // frees all the resources previously allocated
   static void clean_up();
 
+  // ParamSet methods to use on objects
   static void camera(const ParamSet &ps);
   static void look_at(const ParamSet &ps);
   static void background(const ParamSet &ps);
@@ -48,6 +50,9 @@ public:
   static void world_begin(const ParamSet &ps);
   static void world_end(const ParamSet &ps);
   static void film(const ParamSet &ps);
+
+  // Methods that create the objects based on paramset's data
+  static std::unique_ptr<Camera> make_camera(const ParamSet &camera, const ParamSet &look_at);
   static std::unique_ptr<Film> make_film(const ParamSet &ps);
 
 private:

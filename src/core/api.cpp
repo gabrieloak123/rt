@@ -5,8 +5,10 @@
 #include <utility>
 
 #include "api.hpp"
+#include "camera.hpp"
 #include "common.hpp"
 #include "error.hpp"
+#include "paramset.hpp"
 #include "parser.hpp"
 
 namespace rt {
@@ -31,15 +33,6 @@ void API::init_engine(const RunningOptions &opt) {
   // m_current_gs = GraphicsState();
   MESSAGE("[1] Rendering engine initiated.\n");
 }
-
-// calls the static function parse(opt.file_name)
-void API::run() {
-  Parser::parse_scene(m_run_options.scene);
-  // [1] Parser and load scene file
-  // [2] Instantiate the Camera, Film, and Background objects.
-  // [3] Enter the ray tracing main loop, because parser has found the
-  // `world_end` tag
-};
 
 // frees all the resources previously allocated
 void API::clean_up() {}
@@ -94,56 +87,6 @@ void API::hard_engine_reset() {
   // TODO: in the future.
 }
 
-void API::world_end(const ParamSet &ps) {
-  MESSAGE(
-      "====================================================================");
-  MESSAGE("   Parsing Phase has ended. Rendering process starts now...");
-  MESSAGE(
-      "====================================================================");
-
-  check_in_world_block_state("API::world_end()");
-
-  // ===============================================================
-  // 1) Create the integrator.
-  // 2) Create the scene (requires the list of objects and background)
-  // ===============================================================
-  // For now, we create the film here but in the future it will be
-  // instantiated somewhere else.
-  std::unique_ptr<Film> film = make_film(m_render_options->objects["film"]);
-  if (film == nullptr) {
-    ERROR("API::setup_camera(): Unable to create film.");
-  } else {
-    m_render_options->film = std::move(film);
-  }
-
-  // The scene has already been parsed and properly set up. It's time to render
-  // the scene. [1] Create the integrator. [2] Create the scene. [3] Run
-  // integrator if previous instantiations went ok
-  bool scene_and_integrator_ok{true}; // THIS is a STUB.
-  if (scene_and_integrator_ok) {
-    MESSAGE("    Parsing scene successfuly done!\n");
-    MESSAGE("[2] Starting ray tracing progress.\n");
-    MESSAGE("    Ray tracing is usually a slow process, please be patient: \n");
-    //================================================================================
-    auto start = std::chrono::steady_clock::now();
-    // m_integrator->render(*m_scene);
-    render();
-    auto end = std::chrono::steady_clock::now();
-    //================================================================================
-    auto diff = end - start; // Store the time difference between start and end
-    // Seconds
-    auto diff_sec = std::chrono::duration_cast<std::chrono::seconds>(diff);
-    MESSAGE("    Time elapsed: " + std::to_string(diff_sec.count()) +
-            " seconds (" +
-            std::to_string(
-                std::chrono::duration<double, std::milli>(diff).count()) +
-            " ms) \n");
-  }
-  // [4] Basic clean up, preparing for new rendering, in case we have
-  // several scene setup + world in a single input scene file.
-  m_api_state = API::Setup; // correct machine state.
-}
-
 void API::film(const ParamSet &ps) {
   if (not check_in_setup_block_state("API::film()")) {
     return;
@@ -176,30 +119,6 @@ void API::background(const ParamSet &ps) {
   m_render_options->background.reset(bkg);
 }
 
-void API::render() {
-  // Perform objects initialization here.
-  // -------------------------------------------------------------
-  // The Film object holds the memory for the image.
-
-  auto &film = m_render_options->film;
-  auto w = film->width();
-  auto h = film->height();
-  // -------------------------------------------------------------
-  // Traverse all pixels to shoot rays from.
-  for (byte j = 0; j < h; j++) {
-    for (byte i = 0; i < w; i++) {
-      // Not shooting rays just yet; so let us sample the background.
-      auto color = m_render_options->background->sample(
-          float(i) / float(w), float(j) / float(h)); // get background color.
-      m_render_options->film->add(
-          Pixel{i, j},
-          color); // set image buffer at position (i,j), accordingly.
-    }
-  }
-  // send image color buffer to the output file.
-  m_render_options->film->write_image();
-}
-
 std::unique_ptr<Film> API::make_film(const ParamSet &ps) {
   std::unique_ptr<Film> film{nullptr};
   auto film_type = ps.retrieve<string>("type", "unknown");
@@ -211,5 +130,136 @@ std::unique_ptr<Film> API::make_film(const ParamSet &ps) {
   return film;
 }
 // ===
+
+// TODO: Adapt
+void API::run() {
+  Parser::parse_scene(m_run_options.scene);
+  // [1] Parser and load scene file
+  // [2] Instantiate the Camera, Film, and Background objects.
+  // [3] Enter the ray tracing main loop, because parser has found the
+  // `world_end` tag
+};
+
+void API::world_end(const ParamSet &ps) {
+  MESSAGE(
+      "====================================================================");
+  MESSAGE("   Parsing Phase has ended. Rendering process starts now...");
+  MESSAGE(
+      "====================================================================");
+
+  check_in_world_block_state("API::world_end()");
+
+  // ===============================================================
+  // 1) Create the integrator.
+  // 2) Create the scene (requires the list of objects and background)
+  // ===============================================================
+  // For now, we create the film here but in the future it will be
+  // instantiated somewhere else.
+  // TODO: finish
+  std::unique_ptr<Camera> camera = make_camera(m_render_options->objects["camera"], m_render_options->objects["lookat"]);
+  std::unique_ptr<Film> film = make_film(m_render_options->objects["film"]);
+  if (film == nullptr) {
+    ERROR("API::setup_camera(): Unable to create film.");
+  } else {
+    m_render_options->camera->film = std::move(film);
+  }
+
+  // The scene has already been parsed and properly set up. It's time to render
+  // the scene. [1] Create the integrator. [2] Create the scene. [3] Run
+  // integrator if previous instantiations went ok
+  bool scene_and_integrator_ok{true}; // THIS is a STUB.
+  if (scene_and_integrator_ok) {
+    MESSAGE("    Parsing scene successfuly done!\n");
+    MESSAGE("[2] Starting ray tracing progress.\n");
+    MESSAGE("    Ray tracing is usually a slow process, please be patient: \n");
+    //================================================================================
+    auto start = std::chrono::steady_clock::now();
+    // m_integrator->render(*m_scene);
+    render();
+    auto end = std::chrono::steady_clock::now();
+    //================================================================================
+    auto diff = end - start; // Store the time difference between start and end
+    // Seconds
+    auto diff_sec = std::chrono::duration_cast<std::chrono::seconds>(diff);
+    MESSAGE("    Time elapsed: " + std::to_string(diff_sec.count()) +
+            " seconds (" +
+            std::to_string(
+                std::chrono::duration<double, std::milli>(diff).count()) +
+            " ms) \n");
+  }
+  // [4] Basic clean up, preparing for new rendering, in case we have
+  // several scene setup + world in a single input scene file.
+  m_api_state = API::Setup; // correct machine state.
+}
+
+// TODO: Finish camera
+void API::camera(const ParamSet &ps) {
+  check_in_world_block_state("API::camera");
+
+  auto type = ps.retrieve<std::string>("type", "unknown");
+  if (type == "unknown") {
+    ERROR(
+        "API::camera(): Missing \"type\" specificaton for the background.");
+  } else if(type == "perspective") {
+  	auto fovy = ps.retrieve<double>("fovy", -1.0);
+	  if(fovy == -1.0) {
+    ERROR(
+        "API::camera(): Missing \"fovy\" propertie for perspective camera.");
+	  }
+  } else if(type == "orthographic") {
+  	auto screen_window = ps.retrieve<Point4>("screen_window", Point4(0,0,0,0));
+	  if(screen_window == Point4(0,0,0,0)) {
+    ERROR(
+        "API::camera(): Missing \"screen_window\" propertie for orthographic camera.");
+	  }
+  }
+
+  m_render_options->objects["camera"] = ps;
+}
+
+// TODO: extract data
+void API::look_at(const ParamSet &ps) {
+  check_in_world_block_state("API::look_at");
+  m_render_options->objects["lookat"] = ps;
+}
+
+
+// TODO: Adapt to the camera type
+void API::render() {
+  // Perform objects initialization here.
+  // -------------------------------------------------------------
+  // The Film object holds the memory for the image.
+
+  auto film = m_render_options->camera->film.get();
+  auto w = film->width();
+  auto h = film->height();
+  // -------------------------------------------------------------
+  // Traverse all pixels to shoot rays from.
+  for (byte j = 0; j < h; j++) {
+    for (byte i = 0; i < w; i++) {
+      // Not shooting rays just yet; so let us sample the background.
+      auto color = m_render_options->background->sample(
+          float(i) / float(w), float(j) / float(h)); // get background color.
+      m_render_options->camera->film->add(
+          Pixel{i, j},
+          color); // set image buffer at position (i,j), accordingly.
+    }
+  }
+  // send image color buffer to the output file.
+  m_render_options->camera->film->write_image();
+}
+
+// TODO: use the data in 
+std::unique_ptr<Camera> API::make_camera(const ParamSet &camera, const ParamSet &look_at) {
+  std::unique_ptr<Camera> cam{nullptr};
+
+  auto camera_type = camera.retrieve<string>("type", "unknown");
+  if (camera_type == "orthographic" || camera_type == "perspective") {
+    cam = create_camera(camera, look_at);
+  } else {
+    WARNING(string{"Camera \""} + camera_type + string{"\" unknown."});
+  }
+  return cam;
+}
 
 } // namespace rt
