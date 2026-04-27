@@ -1,5 +1,4 @@
 #include <cstdint>
-
 #include <fstream>
 
 #include "image.hpp"

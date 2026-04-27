@@ -1,19 +1,18 @@
-#include "film.hpp"
-#include "api.hpp"
-#include "common.hpp"
-#include "image.hpp"
-#include "error.hpp"
-#include <array>
 #include <memory>
 #include <utility>
+
+#include "api.hpp"
+#include "common.hpp"
+#include "film.hpp"
+#include "image.hpp"
 
 namespace rt {
 Film::Film(const Resolution &w, const Resolution &h, const string &filename,
            FilmType_e film_type, ImageType_e image_type, bool gamma_corrected)
     : m_img_type(image_type), m_film_type(film_type), m_x_res(w), m_y_res(h),
-      m_filename(filename), m_gamma_correction(gamma_corrected){
-        color_buffer.resize(h * w);
-      }
+      m_filename(filename), m_gamma_correction(gamma_corrected) {
+  color_buffer.resize(h * w);
+}
 
 /// Add the Spectrum color to image. Pixel coords comes as (x,y).
 void Film::add(const Pixel &p, const RGBColor &c) {
@@ -23,17 +22,17 @@ void Film::add(const Pixel &p, const RGBColor &c) {
 /// Convert Spectrum image information to RGB, compute final pixel values, write
 /// image.
 void Film::write_image() const {
-  switch(m_img_type){
-    case ImageType_e::PNG:
-      rt::save_png(color_buffer, m_x_res, m_y_res, m_filename);
+  switch (m_img_type) {
+  case ImageType_e::PNG:
+    rt::save_png(color_buffer, m_x_res, m_y_res, m_filename);
     break;
-    case ImageType_e::PPM3:
-      rt::save_ppm3(color_buffer, m_x_res, m_y_res, m_filename);
+  case ImageType_e::PPM3:
+    rt::save_ppm3(color_buffer, m_x_res, m_y_res, m_filename);
     break;
-    case ImageType_e::PPM6:
-      rt::save_ppm6(color_buffer, m_x_res, m_y_res, m_filename);
+  case ImageType_e::PPM6:
+    rt::save_ppm6(color_buffer, m_x_res, m_y_res, m_filename);
     break;
-    default:
+  default:
     break;
   }
 }
@@ -114,8 +113,7 @@ std::unique_ptr<Film> create_film(const ParamSet &ps) {
   std::cout << "================================================\n";
 #endif
 
-
-  return std::make_unique<Film>(dimensions.first, dimensions.second, filename, film_type,
-                  img_type, apply_gamma_correction);
+  return std::make_unique<Film>(dimensions.first, dimensions.second, filename,
+                                film_type, img_type, apply_gamma_correction);
 }
 } // namespace rt

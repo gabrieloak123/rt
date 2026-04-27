@@ -2,10 +2,11 @@
 #include <stdexcept>
 #include <string>
 
-#include "api.hpp"
 #include "tinyxml2/tinyxml2.h"
 #include <CLI11/CLI11.hpp>
 
+#include "api.hpp"
+#include "camera.hpp"
 #include "common.hpp"
 #include "error.hpp"
 #include "paramset.hpp"
@@ -302,6 +303,21 @@ std::unordered_map<string, vector<string>> tag_catalog{
             "gamma_corrected",
         },
     },
+	{
+		"camera",
+		{
+			"type",
+			"screen_window",
+		}
+	},
+	{
+		"lookat",
+		{
+			"look_from",
+			"look_at",
+			"up",
+		}
+	},
     {
         "world_begin",
         {""}, // no attributes
@@ -315,6 +331,7 @@ std::unordered_map<string, vector<string>> tag_catalog{
 /// Maps the tag name to its corresponding API function.
 std::unordered_map<string, std::function<void(const ParamSet &)>> api_functions{
     {"background", API::background},
+    {"camera", API::camera},
     {"world_begin", API::world_begin},
     {"world_end", API::world_end},
     {"film", API::film},
@@ -333,6 +350,13 @@ std::unordered_map<string, ConverterFunction> converters{
     {"tl", convert<RGBColor>},
     {"tr", convert<RGBColor>},
     {"br", convert<RGBColor>},
+	// Camera attributes
+	{"fovy", convert<double>},
+	{"screen_window", convert<Point4>},
+	// Camera attributes but at lookat tag
+	{"look_from", convert<Vec3>},
+	{"look_at", convert<Vec3>},
+	{"up", convert<Vec3>},
     // Image attributes
     {"x_res", convert<int>},
     {"y_res", convert<int>},
