@@ -21,7 +21,7 @@
 #include <cstdint>
 #include <fstream>
 
-using size_t = std::size_t;
+using std::size_t;
 
 /**
   *
