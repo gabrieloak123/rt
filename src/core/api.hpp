@@ -4,6 +4,7 @@
 #include <memory>
 #include <unordered_map>
 
+#include "scenes.hpp"
 #include "background.hpp"
 #include "camera.hpp"
 #include "film.hpp"
@@ -15,6 +16,8 @@ struct RenderOptions {
   std::unique_ptr<Background> background;
   std::unordered_map<string, ParamSet> objects;
   std::unique_ptr<Camera> camera;
+  std::vector<std::shared_ptr<Material>> materials;
+  std::vector<std::shared_ptr<Primitive>> elements;
 };
 
 class API {
@@ -50,6 +53,7 @@ public:
   static void world_begin(const ParamSet &ps);
   static void world_end(const ParamSet &ps);
   static void film(const ParamSet &ps);
+  static void object(const ParamSet &ps);
 
   // Methods that create the objects based on paramset's data
   static std::unique_ptr<Camera> make_camera(const ParamSet &camera,

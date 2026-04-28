@@ -227,6 +227,33 @@ void API::camera(const ParamSet &ps) {
   m_render_options->objects["camera"] = ps;
 }
 
+void API::material(const ParamSet& ps){
+  check_in_world_block_state("API::material");
+  auto type = ps.retrieve<std::string>("type", "unknown");
+  if (type == "unknown") {
+    ERROR("API::material(): Missing \"type\" specification for the material.");
+  }
+  auto color_type = ps.retrieve<std::string>("color_type", "rgb");
+  auto color = RGBColor(ps.retrieve<RGBColor>("color", RGBColor()), color_type);
+  m_render_options->materials.push_back( std::shared_ptr<Material>(new Material(color, type)));
+}
+
+void API::object(const ParamSet &ps){
+  check_in_world_block_state("API::object");
+  auto type = ps.retrieve<std::string>("type", "unknown");
+  if (type == "unknown") {
+    ERROR("API::object(): Missing \"type\" specification for the object.");
+  }
+  if(type == "sphere"){
+    auto radius = ps.retrieve<double>("radius", 0.0f);
+    if(radius == 0.0f){
+      ERROR("API::object(): Missing \"radius\" specification for the sphere.");
+    }
+    auto center = ps.retrieve<Point3>("center", {0, 0, 0});
+    m_render_options->elements.push_back(std::shared_ptr<Sphere>(new Sphere(center, radius, *m_render_options->materials.back())));
+  }
+  else ERROR("API::object(): Missing \"type\" specification for the object.");
+}
 // TODO: extract data
 void API::look_at(const ParamSet &ps) {
   check_in_setup_block_state("API::look_at");
@@ -244,13 +271,21 @@ void API::render() {
   auto h = film->height();
   // -------------------------------------------------------------
   // Traverse all pixels to shoot rays from.
-  for (byte j = 0; j < h; j++) {
-    for (byte i = 0; i < w; i++) {
-      // Not shooting rays just yet; so let us sample the background.
+  for (int j = h - 1; j > 0; j--) {
+    for (int i = 0; i < w; i++) {
+      Ray ray = m_render_options->camera->generate_ray(i, j);
+      
       auto color = m_render_options->background->sample(
-          float(i) / float(w), float(j) / float(h)); // get background color.
+          float(i) / float(w),  1 - float(j) / float(h)); // get background color.
+
+      for(auto& o : m_render_options->elements){
+        if(o->intersect_p(ray)){
+          color = RGBColor(255.0f, 0.0f, 0.0f);
+        }
+      }
+
       m_render_options->camera->film->add(
-          Pixel{i, j},
+          Pixel{static_cast<byte>(i), static_cast<byte>(j)},
           color); // set image buffer at position (i,j), accordingly.
     }
   }

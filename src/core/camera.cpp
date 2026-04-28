@@ -20,7 +20,7 @@ OrthographicCamera::OrthographicCamera(Point3 look_from, const Point3 look_at,
   Vec3 w{look_from - look_at}; //< Create the W axis aligned with gaze.
   w.mk_unit_vec();
 
-  Vec3 u = cross(vup, w); //< Create the U axis perpendicular to the vup and W.
+  Vec3 u = - cross(vup, w); //< Create the U axis perpendicular to the vup and W.
   u.mk_unit_vec();
 
   Vec3 v = cross(w, u); //< Create the V axis perpendicular to W and U .
@@ -60,7 +60,7 @@ PerspectiveCamera::PerspectiveCamera(Point3 look_from, const Point3 look_at,
   Vec3 w{vpn}; //< Create the W axis aligned with vpn.
   w.mk_unit_vec();
 
-  Vec3 u = cross(vup, w); //< Create the U axis perpendicular to the vup and W.
+  Vec3 u = -cross(vup, w); //< Create the U axis perpendicular to the vup and W.
   u.mk_unit_vec();
 
   Vec3 v = cross(w, u); //< Create the V axis perpendicular to W and U .

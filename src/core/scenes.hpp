@@ -65,5 +65,9 @@ class Sphere : public Primitive {
     
 };
 
- 
+
+class Scene {
+
+};
+
 #endif

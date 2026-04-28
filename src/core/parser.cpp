@@ -345,6 +345,7 @@ std::unordered_map<string, std::function<void(const ParamSet &)>> api_functions{
     {"background", API::background}, {"camera", API::camera},
     {"lookat", API::look_at},        {"world_begin", API::world_begin},
     {"world_end", API::world_end},   {"film", API::film},
+    {"material", API::material},{"object", API::object},
 };
 
 /// Maps convertion function to an attribute name.
