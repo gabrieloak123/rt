@@ -49,8 +49,22 @@ string handles_filename(const ParamSet &ps) {
 std::pair<Resolution, Resolution> handles_dimensions(const ParamSet &ps) {
   std::pair<Resolution, Resolution> dimensions;
 
-  dimensions = {ps.retrieve<int>("x_res", 1280),
-                ps.retrieve<int>("y_res", 720)};
+  int x = ps.retrieve<int>("x_res", -1);
+  int y = ps.retrieve<int>("y_res", -1);
+  
+  if(x == -1){
+    x = ps.retrieve<int>("w_res", -1);
+    if(x == -1){
+      x = 1280;
+    }
+  }
+  if(y == -1){
+    y = ps.retrieve<int>("h_res", -1);
+    if(y == -1){
+      y = 720;
+    }
+  }
+  dimensions = {x, y};
   // Quick render?
   if (API::m_run_options.quick) {
     // decrease resolution.
