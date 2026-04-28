@@ -52,7 +52,10 @@ public:
   static void film(const ParamSet &ps);
 
   // Methods that create the objects based on paramset's data
-  static std::unique_ptr<Camera> make_camera(const ParamSet &camera, const ParamSet &look_at);
+  static std::unique_ptr<Camera> make_camera(const ParamSet &camera,
+                                             const ParamSet &look_at,
+                                             const Resolution width,
+                                             const Resolution height);
   static std::unique_ptr<Film> make_film(const ParamSet &ps);
 
 private:

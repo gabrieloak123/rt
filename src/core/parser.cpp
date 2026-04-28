@@ -303,21 +303,18 @@ std::unordered_map<string, vector<string>> tag_catalog{
             "gamma_corrected",
         },
     },
-	{
-		"camera",
-		{
-			"type",
-			"screen_window",
-		}
-	},
-	{
-		"lookat",
-		{
-			"look_from",
-			"look_at",
-			"up",
-		}
-	},
+    {"camera",
+     {
+         "type",
+         "screen_window",
+         "fovy",
+     }},
+    {"lookat",
+     {
+         "look_from",
+         "look_at",
+         "up",
+     }},
     {
         "world_begin",
         {""}, // no attributes
@@ -330,11 +327,9 @@ std::unordered_map<string, vector<string>> tag_catalog{
 
 /// Maps the tag name to its corresponding API function.
 std::unordered_map<string, std::function<void(const ParamSet &)>> api_functions{
-    {"background", API::background},
-    {"camera", API::camera},
-    {"world_begin", API::world_begin},
-    {"world_end", API::world_end},
-    {"film", API::film},
+    {"background", API::background}, {"camera", API::camera},
+    {"lookat", API::look_at},        {"world_begin", API::world_begin},
+    {"world_end", API::world_end},   {"film", API::film},
 };
 
 /// Maps convertion function to an attribute name.
@@ -350,14 +345,16 @@ std::unordered_map<string, ConverterFunction> converters{
     {"tl", convert<RGBColor>},
     {"tr", convert<RGBColor>},
     {"br", convert<RGBColor>},
-	// Camera attributes
-	{"fovy", convert<double>},
-	{"screen_window", convert<Point4>},
-	// Camera attributes but at lookat tag
-	{"look_from", convert<Vec3>},
-	{"look_at", convert<Vec3>},
-	{"up", convert<Vec3>},
-    // Image attributes
+    // Camera attributes
+    // TODO: add aspect ratio
+    {"fovy", convert<double>},
+    {"screen_window", convert<Point4>},
+    // Camera attributes but at lookat tag
+    {"look_from", convert<Point3>},
+    {"look_at", convert<Point3>},
+    {"up", convert<Point3>},
+    // Film attributes
+    // TODO: crop_window
     {"x_res", convert<int>},
     {"y_res", convert<int>},
     {"w_res", convert<int>},

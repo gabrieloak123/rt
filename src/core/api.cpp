@@ -8,6 +8,7 @@
 #include "camera.hpp"
 #include "common.hpp"
 #include "error.hpp"
+#include "film.hpp"
 #include "paramset.hpp"
 #include "parser.hpp"
 
@@ -156,12 +157,20 @@ void API::world_end(const ParamSet &ps) {
   // For now, we create the film here but in the future it will be
   // instantiated somewhere else.
   // TODO: finish
-  std::unique_ptr<Camera> camera = make_camera(m_render_options->objects["camera"], m_render_options->objects["lookat"]);
   std::unique_ptr<Film> film = make_film(m_render_options->objects["film"]);
+
+  Resolution w = film->width();
+  Resolution h = film->height();
+  std::unique_ptr<Camera> camera =
+      make_camera(m_render_options->objects["camera"],
+                  m_render_options->objects["lookat"], w, h);
   if (film == nullptr) {
     ERROR("API::setup_camera(): Unable to create film.");
+  } else if (camera == nullptr) {
+    ERROR("API::setup_camera(): Unable to create camera.");
   } else {
-    m_render_options->camera->film = std::move(film);
+    camera->film = std::move(film);
+    m_render_options->camera = std::move(camera);
   }
 
   // The scene has already been parsed and properly set up. It's time to render
@@ -192,26 +201,27 @@ void API::world_end(const ParamSet &ps) {
   m_api_state = API::Setup; // correct machine state.
 }
 
-// TODO: Finish camera
 void API::camera(const ParamSet &ps) {
-  check_in_world_block_state("API::camera");
+  if (not check_in_setup_block_state("API::camera()")) {
+    return;
+  }
 
   auto type = ps.retrieve<std::string>("type", "unknown");
   if (type == "unknown") {
-    ERROR(
-        "API::camera(): Missing \"type\" specificaton for the background.");
-  } else if(type == "perspective") {
-  	auto fovy = ps.retrieve<double>("fovy", -1.0);
-	  if(fovy == -1.0) {
-    ERROR(
-        "API::camera(): Missing \"fovy\" propertie for perspective camera.");
-	  }
-  } else if(type == "orthographic") {
-  	auto screen_window = ps.retrieve<Point4>("screen_window", Point4(0,0,0,0));
-	  if(screen_window == Point4(0,0,0,0)) {
-    ERROR(
-        "API::camera(): Missing \"screen_window\" propertie for orthographic camera.");
-	  }
+    ERROR("API::camera(): Missing \"type\" specification for the background.");
+  } else if (type == "perspective") {
+    auto fovy = ps.retrieve<double>("fovy", -1.0);
+    if (fovy == -1.0) {
+      ERROR(
+          "API::camera(): Missing \"fovy\" propertie for perspective camera.");
+    }
+  } else if (type == "orthographic") {
+    auto screen_window =
+        ps.retrieve<Point4>("screen_window", Point4(-1.777, 1.777, -1.0, 1.0));
+    if (screen_window == Point4(-1.777, 1.777, -1.0, 1.0)) {
+      WARNING("API::camera(): Missing \"screen_window\" propertie for "
+              "orthographic camera. Considering 16:9.");
+    }
   }
 
   m_render_options->objects["camera"] = ps;
@@ -219,10 +229,9 @@ void API::camera(const ParamSet &ps) {
 
 // TODO: extract data
 void API::look_at(const ParamSet &ps) {
-  check_in_world_block_state("API::look_at");
+  check_in_setup_block_state("API::look_at");
   m_render_options->objects["lookat"] = ps;
 }
-
 
 // TODO: Adapt to the camera type
 void API::render() {
@@ -249,13 +258,15 @@ void API::render() {
   m_render_options->camera->film->write_image();
 }
 
-// TODO: use the data in 
-std::unique_ptr<Camera> API::make_camera(const ParamSet &camera, const ParamSet &look_at) {
+// TODO: use the data in
+std::unique_ptr<Camera> API::make_camera(const ParamSet &camera,
+                                         const ParamSet &look_at,
+                                         Resolution width, Resolution height) {
   std::unique_ptr<Camera> cam{nullptr};
 
   auto camera_type = camera.retrieve<string>("type", "unknown");
   if (camera_type == "orthographic" || camera_type == "perspective") {
-    cam = create_camera(camera, look_at);
+    cam = Camera::create_camera(camera, look_at, width, height);
   } else {
     WARNING(string{"Camera \""} + camera_type + string{"\" unknown."});
   }
