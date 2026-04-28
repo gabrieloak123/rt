@@ -59,7 +59,7 @@ template<typename T>
             * @brief Construtor parametrizado
             * @param vec Vetor com os componentes XYZW (ou RGBA).
             */
-            constexpr vec4(vec4<T>& vec) : e{vec[0], vec[1], vec[2], vec[3]}{};
+            constexpr vec4(const vec4<T>& vec) : e{vec[0], vec[1], vec[2], vec[3]}{};
 
             /**
             * @brief Construtor parametrizado
@@ -157,12 +157,12 @@ template<typename T>
               * @param v2 Vetor que a comparação será feita
               * @return bool Valor correspondente à comparação
               */
-            constexpr bool operator==(const vec4<T> &v2){
+            constexpr bool operator==(const vec4<T> &v2) const {
 				return
-                e[0] == v2.e[0] &
-                e[1] == v2.e[1] &
-                e[2] == v2.e[2] &
-                e[3] == v2.e[3];
+                (e[0] == v2.e[0]) &
+                (e[1] == v2.e[1]) &
+                (e[2] == v2.e[2]) &
+                (e[3] == v2.e[3]);
             }
 
             /**
