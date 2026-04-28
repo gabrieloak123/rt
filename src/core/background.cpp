@@ -22,9 +22,9 @@ Background::Background(const std::array<RGBColor, 4> &colors) {
 
 RGBColor Background::linear_interpolation(const RGBColor &A, const RGBColor &B,
                                           double t) const {
-  return RGBColor{static_cast<byte>((1 - t) * A.red + t * B.red),
-                  static_cast<byte>((1 - t) * A.green + t * B.green),
-                  static_cast<byte>((1 - t) * A.blue + t * B.blue)};
+  return RGBColor{static_cast<float>((1 - t) * A.red + t * B.red),
+                  static_cast<float>((1 - t) * A.green + t * B.green),
+                  static_cast<float>((1 - t) * A.blue + t * B.blue)};
 };
 
 RGBColor Background::sample(real_type u, real_type v) const {
@@ -71,7 +71,8 @@ Background *create_color_background(std::string_view type, const ParamSet &ps) {
     // The tag:
     // <background type="single_color" color="153 204 255"/>
     // default color is black
-    RGBColor single_color{ps.retrieve<RGBColor>("color", black)};
+    auto color_type = ps.retrieve<std::string>("color_type", "rgb");
+    RGBColor single_color{ps.retrieve<RGBColor>("color", black), color_type};
     return new Background(
         {single_color, single_color, single_color, single_color});
   }
@@ -84,11 +85,12 @@ Background *create_color_background(std::string_view type, const ParamSet &ps) {
     size_t idx{0};
     for (const auto &label : corner_name) {
       // black by default again
-      RGBColor color{ps.retrieve<RGBColor>(label, black)};
+      auto color_type = ps.retrieve<std::string>("color_type", "rgb");
+      RGBColor color{ps.retrieve<RGBColor>(label, black), color_type};
       color_list[idx++] = RGBColor{
-          static_cast<byte>(color.red ),
-          static_cast<byte>(color.green ),
-          static_cast<byte>(color.blue)};
+          static_cast<float>(color.red ),
+          static_cast<float>(color.green ),
+          static_cast<float>(color.blue)};
     }
     return new Background(color_list);
   }

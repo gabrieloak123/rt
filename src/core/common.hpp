@@ -8,7 +8,7 @@
 #include <iostream>
 #include <vector>
 
-using byte = uint16_t;
+using byte = u_int16_t;
 
 using std::cout;
 using std::endl;
@@ -41,23 +41,40 @@ struct RunningOptions {
 };
 
 struct RGBColor {
-  byte red;
-  byte green;
-  byte blue;
+  float red;
+  float green;
+  float blue;
 
   RGBColor() : red(0), green(0), blue(0) {};
-  RGBColor(byte red, byte green, byte blue) : red(red), green(green), blue(blue) {};
+  RGBColor(RGBColor color, std::string color_type){
+     *this = RGBColor(color.red, color.green, color.blue, color_type);
+  };
+  RGBColor(float red, float green, float blue, std::string color_type){
+    
+    if(color_type == "rgb"){
+      this->red = red;
+      this->green = green;
+      this->blue = blue;
+    }
+    else if (color_type == "spectre"){
+      this->red = 255.0f * red;
+      this->green = 255.0f * green;
+      this->blue = 255.0f * blue;
+    }
+  }
+
+  RGBColor(float red, float green, float blue) : red(red), green(green), blue(blue) {};
 
   
   RGBColor operator+(const RGBColor& c){return RGBColor(red + c.red, green + c.green, blue + c.blue);};
 
-  byte&    operator[](const size_t index){
+  float&    operator[](const size_t index){
     if(index == 0)return red;
     if(index == 1)return green;
     return blue;
   };
 
-  byte operator[](const size_t index) const {
+  float operator[](const size_t index) const {
     if(index == 0)return red;
     if(index == 1)return green;
     return blue;

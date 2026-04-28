@@ -282,6 +282,7 @@ std::unordered_map<string, vector<string>> tag_catalog{
             "type",
             "filename",
             "mapping",
+            "color_type",
             "color",
             "tl",
             "tr",
@@ -315,6 +316,20 @@ std::unordered_map<string, vector<string>> tag_catalog{
          "look_at",
          "up",
      }},
+     {"material",
+      {
+        "type",
+        "color_type",
+        "color",
+      }
+     },
+     {"object",
+      {
+        "type",
+        "radius",
+        "center",
+      }
+    },
     {
         "world_begin",
         {""}, // no attributes
@@ -337,6 +352,7 @@ std::unordered_map<string, ConverterFunction> converters{
     {"type", convert<string>}, // "type" must be a string.
     {"name", convert<string>}, // "name" must be a string.
     //
+    {"color_type", convert<string>},
     {"color", convert<RGBColor>}, // "color" is a Color24 with 3 fields.
     {"flip", convert<bool>},
     // Background attributes.
@@ -362,6 +378,8 @@ std::unordered_map<string, ConverterFunction> converters{
     {"filename", convert<string>},
     {"img_type", convert<string>},
     {"gamma_corrected", convert<bool>},
+    {"radius", convert<double>},
+    {"center", convert<Point3>},
 };
 
 /*!
