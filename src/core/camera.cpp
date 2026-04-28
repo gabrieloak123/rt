@@ -17,7 +17,7 @@ OrthographicCamera::OrthographicCamera(Point3 look_from, const Point3 look_at,
   m_gaze_dir = gaze;
   m_gaze_dir.mk_unit_vec();
 
-  Vec3 w{gaze}; //< Create the W axis aligned with gaze.
+  Vec3 w{look_from - look_at}; //< Create the W axis aligned with gaze.
   w.mk_unit_vec();
 
   Vec3 u = cross(vup, w); //< Create the U axis perpendicular to the vup and W.
@@ -29,16 +29,20 @@ OrthographicCamera::OrthographicCamera(Point3 look_from, const Point3 look_at,
   m_camera_to_world =
       Mat4( //< Creates the transformation matrix responsible for the linear
             // transformation from camera to image.
-          u[0], v[0], w[0], look_from[0], u[1], v[1], w[1], look_from[1], u[2],
-          v[2], w[2], look_from[2], 0.0, 0.0, 0.0, 1.0);
+          u[0], v[0], w[0], look_from[0], 
+          u[1], v[1], w[1], look_from[1], 
+          u[2], v[2], w[2], look_from[2], 
+          0.0,  0.0,  0.0,          1.0);
 
   double width{r - l}, height{t - b}; //< Screen limits
 
   m_raster_to_screen =
       Mat4( //< Creates the transformation matrix responsible for the linear
             // transformation from raster to sceen.
-          width / nx, 0.0, 0.0, l + width / (2.0 * nx), 0.0, height / ny, 0.0,
-          b + height / (2.0 * ny), 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+          width / nx, 0.0, 0.0, l + width / (2.0 * nx),
+           0.0, height / ny, 0.0,b + height / (2.0 * ny), 
+           0.0, 0.0, 1.0, 0.0, 
+           0.0, 0.0, 0.0, 1.0);
 }
 
 PerspectiveCamera::PerspectiveCamera(Point3 look_from, const Point3 look_at,
@@ -65,23 +69,31 @@ PerspectiveCamera::PerspectiveCamera(Point3 look_from, const Point3 look_at,
   m_camera_to_world =
       Mat4( //< Creates the transformation matrix responsible for the linear
             // transformation from camera to image.
-          u[0], v[0], w[0], look_from[0], u[1], v[1], w[1], look_from[1], u[2],
-          v[2], w[2], look_from[2], 0.0, 0.0, 0.0, 1.0);
+          u[0], v[0], w[0], look_from[0], 
+          u[1], v[1], w[1], look_from[1], 
+          u[2], v[2], w[2], look_from[2], 
+          0.0, 0.0, 0.0,            1.0);
 
-  double aspect_ratio = nx/ny;
-  double height = tan ( (fovy / 2) * M_PI / 180.0 ) * focal_dist;
-  double width = 2 * aspect_ratio * height;
+  double aspect_ratio = static_cast<double>(nx)/static_cast<double>(ny);
 
-  double l = -(height * aspect_ratio);
-  double r = -l;
-  double t = height;
-  double b = -height;
+  double hheight = tan ( (fovy / 2.0) * M_PI / 180.0 ) * focal_dist;
+  double hwidth = aspect_ratio * hheight;
+
+  double l = - hwidth;
+  double r =   hwidth;
+  double b =  -hheight;
+  double t =   hheight;
+  
+  double width = r - l;
+  double height = t - b;
 
   m_raster_to_screen =
       Mat4( //< Creates the transformation matrix responsible for the linear
             // transformation from raster to sceen.
-          width / nx, 0.0, 0.0, l + width / (2.0 * nx), 0.0, height / ny, 0.0,
-          b + height / (2.0 * ny), 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+          width / nx, 0.0, 0.0, l + width / (2.0 * nx),
+          0.0, height / ny, 0.0, b + height / (2.0 * ny), 
+          0.0, 0.0, 1.0, 0.0, 
+          0.0, 0.0, 0.0, 1.0);
 }
 
 Ray OrthographicCamera::generate_ray(int i, int j) {
@@ -106,7 +118,7 @@ Ray PerspectiveCamera::generate_ray(int i, int j) {
                   p_raster}; //< Maps the pixel to the screen window in the
                              // camera's coordinate sys.
 
-  p_camera[2] = m_focal_distance; //< Push the target point on the screen to
+  p_camera[2] = -m_focal_distance; //< Push the target point on the screen to
                                   // world space.
   Point4 target4d{m_camera_to_world *
                   p_camera}; //< Convert the target point to world space.
@@ -131,9 +143,8 @@ std::unique_ptr<Camera> Camera::create_camera(const ParamSet &camera,
   //==[1] Retrieve lookat tag.
   auto lookfrom{look_at.retrieve<Point3>("look_from", Vec3(0, 0, 0))};
   auto lookat{look_at.retrieve<Point3>("look_at", Vec3(0, 0, -1))};
-  auto up{look_at.retrieve<Point3>("up", Vec3(0, 1, 0))};
 
-  Point3 up_vec = up - lookfrom;
+  auto up{look_at.retrieve<Point3>("up", Vec3(0, 1, 0))};
 
   auto camera_type{camera.retrieve<string>("type", "orthographic")};
 
@@ -153,7 +164,7 @@ std::unique_ptr<Camera> Camera::create_camera(const ParamSet &camera,
 #endif
 
     return std::make_unique<OrthographicCamera>(
-        lookfrom, lookat, up_vec, sw[0], sw[1],
+        lookfrom, lookat, up, sw[0], sw[1],
         sw[2], sw[3], x, y, 1.0);
   } else if (camera_type == "perspective") {
     //==[3] Retrieve perspective data.
@@ -169,11 +180,11 @@ std::unique_ptr<Camera> Camera::create_camera(const ParamSet &camera,
     std::cout << "================================================\n";
 #endif
 
-	Vec3 vpn = lookat - lookfrom;
+	Vec3 vpn = lookfrom - lookat;
 	vpn.mk_unit_vec();
 
     return std::make_unique<PerspectiveCamera>(
-        lookfrom, lookat, up_vec, vpn, x, y, fovy);
+        lookfrom, lookat, up, vpn, x, y, fovy);
   }
   WARNING("Nullptr");
   return nullptr;
