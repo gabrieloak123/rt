@@ -28,8 +28,8 @@ enum Corners_e {
 namespace rt {
 
 struct Pixel {
-	u_int16_t x;
-	u_int16_t y;
+	u_int64_t x;
+	u_int64_t y;
 };
 
 struct RunningOptions {

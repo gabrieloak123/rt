@@ -227,7 +227,7 @@ void API::camera(const ParamSet &ps) {
   m_render_options->objects["camera"] = ps;
 }
 
-void API::material(const ParamSet& ps){
+void API::material(const ParamSet &ps) {
   check_in_world_block_state("API::material");
   auto type = ps.retrieve<std::string>("type", "unknown");
   if (type == "unknown") {
@@ -235,24 +235,26 @@ void API::material(const ParamSet& ps){
   }
   auto color_type = ps.retrieve<std::string>("color_type", "rgb");
   auto color = RGBColor(ps.retrieve<RGBColor>("color", RGBColor()), color_type);
-  m_render_options->materials.push_back( std::shared_ptr<Material>(new Material(color, type)));
+  m_render_options->materials.push_back(
+      std::shared_ptr<Material>(new Material(color, type)));
 }
 
-void API::object(const ParamSet &ps){
+void API::object(const ParamSet &ps) {
   check_in_world_block_state("API::object");
   auto type = ps.retrieve<std::string>("type", "unknown");
   if (type == "unknown") {
     ERROR("API::object(): Missing \"type\" specification for the object.");
   }
-  if(type == "sphere"){
+  if (type == "sphere") {
     auto radius = ps.retrieve<double>("radius", 0.0f);
-    if(radius == 0.0f){
+    if (radius == 0.0f) {
       ERROR("API::object(): Missing \"radius\" specification for the sphere.");
     }
     auto center = ps.retrieve<Point3>("center", {0, 0, 0});
-    m_render_options->elements.push_back(std::shared_ptr<Sphere>(new Sphere(center, radius, *m_render_options->materials.back())));
-  }
-  else ERROR("API::object(): Missing \"type\" specification for the object.");
+    m_render_options->elements.push_back(std::shared_ptr<Sphere>(
+        new Sphere(center, radius, *m_render_options->materials.back())));
+  } else
+    ERROR("API::object(): Missing \"type\" specification for the object.");
 }
 // TODO: extract data
 void API::look_at(const ParamSet &ps) {
@@ -271,26 +273,20 @@ void API::render() {
   auto h = film->height();
   // -------------------------------------------------------------
   // Traverse all pixels to shoot rays from.
-  for (int j = h - 1; j > 0; j--) {
+  for (int j = h - 1; j >= 0; j--) {
     for (int i = 0; i < w; i++) {
       Ray ray = m_render_options->camera->generate_ray(i, j);
-      
+      cout << "@ pixel( " << j << "," << i << "), Ray: " << ray << "\n";
       auto color = m_render_options->background->sample(
-          float(i) / float(w),  1 - float(j) / float(h)); // get background color.
-
-      for(auto& o : m_render_options->elements){
-        if(o->intersect_p(ray)){
-          color = RGBColor(255.0f, 0.0f, 0.0f);
-        }
-      }
-
+          double(i) / double(w),
+          double(j) / double(h)); // get background color.
       m_render_options->camera->film->add(
-          Pixel{static_cast<byte>(i), static_cast<byte>(j)},
+          Pixel{static_cast<uint64_t>(i), static_cast<uint64_t>(j)},
           color); // set image buffer at position (i,j), accordingly.
     }
+    // send image color buffer to the output file.
+    m_render_options->camera->film->write_image();
   }
-  // send image color buffer to the output file.
-  m_render_options->camera->film->write_image();
 }
 
 // TODO: use the data in
