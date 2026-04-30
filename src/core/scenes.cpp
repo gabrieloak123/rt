@@ -59,15 +59,23 @@ bool Sphere::intersect_p(const Ray &r) const {
     return false;
 
   double sqr = std::sqrt(delta);
-  double root = (-hB - sqr) / A;
 
-  if (root < r.getTMin() || root > r.getTMax()) {
-    root = (-hB + sqr) / A;
-    if (root < r.getTMin() || root > r.getTMax()) {
-      return false;
-    }
+  double n = (hB > 0) ? -hB - sqr : -hB + sqr; // to avoid precision lost
+
+  double t0 = n / A;
+  double t1 = C / n;
+
+  if (t0 > t1) {
+	  std::swap(t0, t1);
   }
-  return true;
+
+  if (t0 >= r.getTMin() && t0 <= r.getTMax())
+    return true;
+
+  if (t1 >= r.getTMin() && t1 <= r.getTMax())
+    return true;
+
+  return false;
 }
 
 } // namespace rt
