@@ -282,7 +282,8 @@ void API::render() {
 
       for (auto &o : m_render_options->elements) {
         if (o->intersect_p(ray)) {
-          color = RGBColor(255.0f, 0.0f, 0.0f);
+			color = o->get_material()->color;
+          // color = RGBColor(255.0f, 0.0f, 0.0f);
         }
       }
 
@@ -295,7 +296,6 @@ void API::render() {
     m_render_options->camera->film->write_image();
 }
 
-// TODO: use the data in
 std::unique_ptr<Camera> API::make_camera(const ParamSet &camera,
                                          const ParamSet &look_at,
                                          Resolution width, Resolution height) {
