@@ -256,13 +256,12 @@ void API::object(const ParamSet &ps) {
   } else
     ERROR("API::object(): Missing \"type\" specification for the object.");
 }
-// TODO: extract data
+
 void API::look_at(const ParamSet &ps) {
   check_in_setup_block_state("API::look_at");
   m_render_options->objects["lookat"] = ps;
 }
 
-// TODO: Adapt to the camera type
 void API::render() {
   // Perform objects initialization here.
   // -------------------------------------------------------------
@@ -273,20 +272,27 @@ void API::render() {
   auto h = film->height();
   // -------------------------------------------------------------
   // Traverse all pixels to shoot rays from.
-  for (int j = h - 1; j >= 0; j--) {
+  for (int j = h - 1; j > 0; j--) {
     for (int i = 0; i < w; i++) {
       Ray ray = m_render_options->camera->generate_ray(i, j);
-      cout << "@ pixel( " << j << "," << i << "), Ray: " << ray << "\n";
+
       auto color = m_render_options->background->sample(
-          double(i) / double(w),
-          double(j) / double(h)); // get background color.
+          float(i) / float(w),
+          1 - float(j) / float(h)); // get background color.
+
+      for (auto &o : m_render_options->elements) {
+        if (o->intersect_p(ray)) {
+          color = RGBColor(255.0f, 0.0f, 0.0f);
+        }
+      }
+
       m_render_options->camera->film->add(
           Pixel{static_cast<uint64_t>(i), static_cast<uint64_t>(j)},
           color); // set image buffer at position (i,j), accordingly.
     }
+  }
     // send image color buffer to the output file.
     m_render_options->camera->film->write_image();
-  }
 }
 
 // TODO: use the data in
