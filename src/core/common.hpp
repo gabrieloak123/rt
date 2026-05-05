@@ -65,8 +65,8 @@ struct RGBColor {
 
   RGBColor(float red, float green, float blue) : red(red), green(green), blue(blue) {};
 
-  
-  RGBColor operator+(const RGBColor& c){return RGBColor(red + c.red, green + c.green, blue + c.blue);};
+  RGBColor operator*(const double& t  )const {return RGBColor(red * static_cast<float>(t), green * static_cast<float>(t), blue * static_cast<float>(t));}
+  RGBColor operator+(const RGBColor& c)const {return RGBColor(red + c.red, green + c.green, blue + c.blue);};
 
   float&    operator[](const size_t index){
     if(index == 0)return red;
