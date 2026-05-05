@@ -111,7 +111,7 @@ void API::background(const ParamSet &ps) {
     ERROR(
         "API::background(): Missing \"type\" specificaton for the background.");
   }
-  std::unique_ptr<Background> bkg{nullptr};
+  std::shared_ptr<Background> bkg{nullptr};
   if (type == "single_color" or type == "4_colors") {
     bkg = create_color_background(type, ps);
   } else {
@@ -120,7 +120,7 @@ void API::background(const ParamSet &ps) {
     bkg = create_color_background(type, ps);
   }
   // Store current background objec.
-  m_render_options->background = std::move(bkg);
+  m_render_options->background = bkg;
 }
 void API::integrator(const ParamSet &ps){
   if (not check_in_setup_block_state("API::integrator")){
