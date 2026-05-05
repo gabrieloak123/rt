@@ -2,6 +2,13 @@
 #include "background.hpp"
 #include "camera.hpp"
 #include "common.hpp"
+#include "paramset.hpp"
+#include "scenes.hpp"
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <limits>
+#include <memory>
 #include <optional>
 
 std::optional<rt::RGBColor> RayCastIntegrator::Li(const Ray& ray, const rt::Scene& scene) const {
@@ -15,7 +22,9 @@ std::optional<rt::RGBColor> RayCastIntegrator::Li(const Ray& ray, const rt::Scen
     }
     // Some form of determining the incoming radiance at the ray's origin.
     // Polymorphism in action.
-    auto fm = std::dynamic_pointer_cast<rt::FlatMaterial>( isect.primitive->get_material() );
+    std::shared_ptr<rt::Material> fm{nullptr};
+    
+    fm = std::dynamic_pointer_cast<rt::FlatMaterial>( isect.primitive->get_material() );
     // Assign diffuse color to L.
 
     if(fm){
@@ -28,6 +37,34 @@ std::optional<rt::RGBColor> RayCastIntegrator::Li(const Ray& ray, const rt::Scen
 
 }
 
+std::optional<rt::RGBColor> NormalMapIntegrator::Li(const Ray& ray, const rt::Scene& scene) const {
+    rt::RGBColor L(0, 0, 0);
+    rt::Surfel isect;
+    if(!scene.intersect(ray, &isect)){
+        return std::nullopt;
+    }
+
+    std::shared_ptr<rt::Material> fm{nullptr};
+
+    Vec3 temp = isect.n;
+    temp += {1, 1, 1};
+    temp /= 2;
+    temp *= 255;
+
+    fm = std::make_shared<rt::FlatMaterial>(rt::RGBColor(temp[0], temp[1], temp[2]));
+
+    if(fm){
+        L = fm->get_color();
+    }
+    else{
+        L = rt::RGBColor(255, 0, 255);
+    }
+
+    return L;
+
+}
+
+
 void SamplerIntegrator::render(const rt::Scene& scene){
       // Perform objects initialization here.
   // -------------------------------------------------------------
@@ -36,6 +73,8 @@ void SamplerIntegrator::render(const rt::Scene& scene){
   if(!camera){
     return;
   }
+  preprocess(scene);
+  
   auto w = camera->film->width();
   auto h = camera->film->height();
 
