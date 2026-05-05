@@ -119,14 +119,8 @@ bool Sphere::intersect_p(const Ray &r) const {
 
 
 bool rt::Scene::intersect(const Ray& ray, Surfel *isect) const{
-  if(aggregate){
-    return aggregate->intersect(ray, isect);
-  }
-  return false; 
+  return aggregate ? aggregate->intersect(ray, isect) : false;
 }
 bool rt::Scene::intersect_p(const Ray& ray) const {
-    if (aggregate) {
-        return aggregate->intersect_p(ray);
-    }
-    return false;
+    return aggregate ? aggregate->intersect_p(ray) : false;
 }
