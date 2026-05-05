@@ -331,6 +331,37 @@ std::unordered_map<string, vector<string>> tag_catalog{
       }
     },
     {
+      "integrator",
+      {
+        "type",
+      }
+    },
+    {
+      "make_named_material",
+      {
+        "type",
+        "name",
+        "color_type",
+        "color",
+      }
+    },
+    {
+      "named_material",
+      {
+        "name",
+      }
+    },
+    {
+      "include",
+      {
+        "filename",
+      }
+    },
+    {
+      "render_again",
+      {""},   // no attributes
+    },
+    {
         "world_begin",
         {""}, // no attributes
     },
@@ -345,7 +376,9 @@ std::unordered_map<string, std::function<void(const ParamSet &)>> api_functions{
     {"background", API::background}, {"camera", API::camera},
     {"lookat", API::look_at},        {"world_begin", API::world_begin},
     {"world_end", API::world_end},   {"film", API::film},
-    {"material", API::material},{"object", API::object},
+    {"material", API::material},     {"object", API::object},
+    {"integrator", API::integrator}, {"make_named_material", API::make_named_material},
+    {"named_material", API::named_material},
 };
 
 /// Maps convertion function to an attribute name.
@@ -521,6 +554,15 @@ void Parser::parse_scene(const string filename) {
       parse_scene(filename.c_str());
       continue; // This tag doesn't have an API function associated with; get
                 // next tag.
+    }
+    if (tag_name == "render_again"){
+     std::ostringstream oss;
+      oss << "<<<<< <render_again> tag was founded! Starting the Rendering phase."
+          << ".\n";
+      MESSAGE(oss.str());
+      rt::API::m_api_state = rt::API::World;
+      rt::API::world_end(ps);
+      continue;
     }
     // ============================================================================
 
