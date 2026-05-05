@@ -1,0 +1,37 @@
+#ifndef INTEGRATOR_HPP
+#define INTEGRATOR_HPP
+
+#include "camera.hpp"
+#include "common.hpp"
+#include "ray.hpp"
+#include "scenes.hpp"
+#include <memory>
+
+class Integrator {
+    public:
+        virtual ~Integrator() = default;
+        virtual void render(const rt::Scene& scene) = 0;
+};
+
+class SamplerIntegrator : public Integrator {
+    protected:
+        std::shared_ptr<rt::Camera> camera;
+    public:
+        virtual ~SamplerIntegrator() = default;
+        SamplerIntegrator(std::shared_ptr<rt::Camera> cam) : camera(cam){};
+
+        virtual std::optional<rt::RGBColor> Li(const Ray& ray, const rt::Scene& scene) const = 0;
+        virtual void render(const rt::Scene& scene) override;
+        virtual void preprocess(const rt::Scene& scene){};
+
+};
+
+class RayCastIntegrator : public SamplerIntegrator {
+    public:
+        RayCastIntegrator(std::shared_ptr<rt::Camera> cam) : SamplerIntegrator(cam) {}
+        std::optional<rt::RGBColor> Li(const Ray& ray, const rt::Scene& scene) const override;
+};
+
+
+
+#endif
