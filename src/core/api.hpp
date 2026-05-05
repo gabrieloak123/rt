@@ -4,6 +4,7 @@
 #include <memory>
 #include <unordered_map>
 
+#include "integrator.hpp"
 #include "scenes.hpp"
 #include "background.hpp"
 #include "camera.hpp"
@@ -13,11 +14,17 @@
 namespace rt {
 
 struct RenderOptions {
-  std::unique_ptr<Background> background;
-  std::unordered_map<string, ParamSet> objects;
-  std::unique_ptr<Camera> camera;
-  std::vector<std::shared_ptr<Material>> materials;
+  std::shared_ptr<Background> background;
+  std::shared_ptr<Camera> camera;
+  std::unique_ptr<Integrator> integrator;
+  std::unique_ptr<rt::Scene> scene;
+
   std::vector<std::shared_ptr<Primitive>> elements;
+  std::unordered_map<string, ParamSet> setup_params;
+
+  std::map<std::string, std::shared_ptr<Material>> material_memory;
+  std::shared_ptr<Material> current_material;
+
 };
 
 class API {
@@ -54,6 +61,9 @@ public:
   static void world_end(const ParamSet &ps);
   static void film(const ParamSet &ps);
   static void object(const ParamSet &ps);
+  static void integrator(const ParamSet &ps);
+  static void make_named_material(const ParamSet &ps);
+  static void named_material(const ParamSet &ps);
 
   // Methods that create the objects based on paramset's data
   static std::unique_ptr<Camera> make_camera(const ParamSet &camera,
@@ -61,7 +71,7 @@ public:
                                              const Resolution width,
                                              const Resolution height);
   static std::unique_ptr<Film> make_film(const ParamSet &ps);
-
+  static std::unique_ptr<Integrator> make_integrator(const ParamSet& ps);
 private:
   static bool check_in_initialized_state(std::string_view func_name);
   static bool check_in_setup_block_state(std::string_view func_name);

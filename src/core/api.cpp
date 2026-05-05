@@ -9,8 +9,10 @@
 #include "common.hpp"
 #include "error.hpp"
 #include "film.hpp"
+#include "integrator.hpp"
 #include "paramset.hpp"
 #include "parser.hpp"
+#include "scenes.hpp"
 
 namespace rt {
 
@@ -84,16 +86,17 @@ void API::world_begin(const ParamSet &ps) {
 /// Erase temporary engine states so that we may render another scene with the
 /// same configuration.
 void API::hard_engine_reset() {
-  // Render options reset
-  // TODO: in the future.
+  /// TODO
 }
+
+
 
 void API::film(const ParamSet &ps) {
   if (not check_in_setup_block_state("API::film()")) {
     return;
   }
   // Store the ps associated with camera for later retrieval.
-  m_render_options->objects["film"] = ps;
+  m_render_options->setup_params["film"] = ps;
   if (m_run_options.verbose) {
     auto type = ps.retrieve<std::string>("type", "unknown");
     std::cout << ">>> film type: " << std::quoted(type) << '\n';
@@ -108,7 +111,7 @@ void API::background(const ParamSet &ps) {
     ERROR(
         "API::background(): Missing \"type\" specificaton for the background.");
   }
-  Background *bkg{nullptr};
+  std::unique_ptr<Background> bkg{nullptr};
   if (type == "single_color" or type == "4_colors") {
     bkg = create_color_background(type, ps);
   } else {
@@ -117,9 +120,21 @@ void API::background(const ParamSet &ps) {
     bkg = create_color_background(type, ps);
   }
   // Store current background objec.
-  m_render_options->background.reset(bkg);
+  m_render_options->background = std::move(bkg);
 }
+void API::integrator(const ParamSet &ps){
+  if (not check_in_setup_block_state("API::integrator")){
+    return;
+  }
+  
+  m_render_options->setup_params["integrator"] = ps;
 
+  if (m_run_options.verbose) {
+    auto type = ps.retrieve<std::string>("type", "unknown");
+    std::cout << ">>> integrator type: " << std::quoted(type) << '\n';
+  }
+
+}
 std::unique_ptr<Film> API::make_film(const ParamSet &ps) {
   std::unique_ptr<Film> film{nullptr};
   auto film_type = ps.retrieve<string>("type", "unknown");
@@ -130,7 +145,19 @@ std::unique_ptr<Film> API::make_film(const ParamSet &ps) {
   }
   return film;
 }
-// ===
+
+std::unique_ptr<Integrator> API::make_integrator(const ParamSet& ps){
+  std::unique_ptr<Integrator> inter{nullptr};
+  auto integrator_type =  ps.retrieve<string>("type", "flat");
+  if(integrator_type == "flat"){
+    inter = std::make_unique<RayCastIntegrator>(m_render_options->camera);
+  }
+  else{
+    WARNING(string{"Integrator \""} + integrator_type + string{"\" unknown."});
+  }
+  return inter;
+}
+
 
 // TODO: Adapt
 void API::run() {
@@ -157,13 +184,20 @@ void API::world_end(const ParamSet &ps) {
   // For now, we create the film here but in the future it will be
   // instantiated somewhere else.
   // TODO: finish
-  std::unique_ptr<Film> film = make_film(m_render_options->objects["film"]);
+
+  auto primitive_list = std::make_shared<PrimitiveList>();
+  for(auto& obj : m_render_options->elements){
+    primitive_list->add(obj);
+  }
+  auto scene = std::make_unique<Scene>(primitive_list, m_render_options->background);
+
+  std::unique_ptr<Film> film = make_film(m_render_options->setup_params["film"]);
 
   Resolution w = film->width();
   Resolution h = film->height();
   std::unique_ptr<Camera> camera =
-      make_camera(m_render_options->objects["camera"],
-                  m_render_options->objects["lookat"], w, h);
+      make_camera(m_render_options->setup_params["camera"],
+                  m_render_options->setup_params["lookat"], w, h);
   if (film == nullptr) {
     ERROR("API::setup_camera(): Unable to create film.");
   } else if (camera == nullptr) {
@@ -171,6 +205,7 @@ void API::world_end(const ParamSet &ps) {
   } else {
     camera->film = std::move(film);
     m_render_options->camera = std::move(camera);
+    m_render_options->scene = std::move(scene);
   }
 
   // The scene has already been parsed and properly set up. It's time to render
@@ -224,7 +259,7 @@ void API::camera(const ParamSet &ps) {
     }
   }
 
-  m_render_options->objects["camera"] = ps;
+  m_render_options->setup_params["camera"] = ps;
 }
 
 void API::material(const ParamSet &ps) {
@@ -235,8 +270,9 @@ void API::material(const ParamSet &ps) {
   }
   auto color_type = ps.retrieve<std::string>("color_type", "rgb");
   auto color = RGBColor(ps.retrieve<RGBColor>("color", RGBColor()), color_type);
-  m_render_options->materials.push_back(
-      std::shared_ptr<Material>(new Material(color, type)));
+  if(type == "flat"){
+    m_render_options->current_material =  std::shared_ptr<Material>(new FlatMaterial(color));
+  }
 }
 
 void API::object(const ParamSet &ps) {
@@ -251,15 +287,40 @@ void API::object(const ParamSet &ps) {
       ERROR("API::object(): Missing \"radius\" specification for the sphere.");
     }
     auto center = ps.retrieve<Point3>("center", {0, 0, 0});
-    m_render_options->elements.push_back(std::shared_ptr<Sphere>(
-        new Sphere(center, radius, *m_render_options->materials.back())));
+    m_render_options->elements.push_back( std::make_shared<Sphere>(center, radius, m_render_options->current_material));
   } else
     ERROR("API::object(): Missing \"type\" specification for the object.");
 }
 
 void API::look_at(const ParamSet &ps) {
   check_in_setup_block_state("API::look_at");
-  m_render_options->objects["lookat"] = ps;
+  m_render_options->setup_params["lookat"] = ps;
+}
+void API::make_named_material(const ParamSet &ps){
+  check_in_world_block_state("API::make_named_material");
+  auto type = ps.retrieve<string>("type", "unknown");
+  if (type == "unknown") {
+    ERROR("API::make_named_material(): Missing \"type\" specification for the material.");
+  }
+  auto material_id = ps.retrieve<std::string>("name", "unknown");
+  if(material_id == "unknown"){
+    ERROR("API::make_named_material(): Missing \"name\" specification for the material.");
+  }
+  auto color_type = ps.retrieve<std::string>("color_type", "rgb");
+  auto color = RGBColor(ps.retrieve<RGBColor>("color", RGBColor()), color_type);
+  if(type == "flat"){
+    m_render_options->material_memory[material_id] =(std::shared_ptr<Material>(new FlatMaterial(color)));
+  }
+}
+
+void API::named_material(const ParamSet &ps){
+  auto material_id = ps.retrieve<string>("name", "unknown");
+  if(m_render_options->material_memory.count(material_id)){
+     m_render_options->current_material = m_render_options->material_memory[material_id];
+  }
+  else{
+    ERROR("API::named_material(): Missing or Invalid \"name\" specification for the material.");
+  }
 }
 
 void API::render() {
@@ -267,36 +328,21 @@ void API::render() {
   // -------------------------------------------------------------
   // The Film object holds the memory for the image.
 
-  auto film = m_render_options->camera->film.get();
-  auto w = film->width();
-  auto h = film->height();
-  // -------------------------------------------------------------
-  // Traverse all pixels to shoot rays from.
-  for (int j = h - 1; j > 0; j--) {
-    for (int i = 0; i < w; i++) {
-      Ray ray = m_render_options->camera->generate_ray(i, j);
+  m_render_options->integrator = make_integrator(m_render_options->setup_params["integrator"]);
 
-      auto color = m_render_options->background->sample(
-          float(i) / float(w),
-          1 - float(j) / float(h)); // get background color.
-
-      for (auto &o : m_render_options->elements) {
-        if (o->intersect_p(ray)) {
-			color = o->get_material()->color;
-          // color = RGBColor(255.0f, 0.0f, 0.0f);
-        }
-      }
-
-      m_render_options->camera->film->add(
-          Pixel{static_cast<uint64_t>(i), static_cast<uint64_t>(j)},
-          color); // set image buffer at position (i,j), accordingly.
-    }
+  auto primitive_list = std::make_shared<PrimitiveList>();
+  for(auto& obj : m_render_options->elements){
+    primitive_list->add(obj);
   }
-    // send image color buffer to the output file.
-    m_render_options->camera->film->write_image();
+
+  m_render_options->scene = std::make_unique<Scene>(primitive_list, m_render_options->background);
+  
+  if(m_render_options->integrator){
+    m_render_options->integrator->render(*m_render_options->scene);
+  }
 }
 
-std::unique_ptr<Camera> API::make_camera(const ParamSet &camera,
+std::unique_ptr<rt::Camera> API::make_camera(const ParamSet &camera,
                                          const ParamSet &look_at,
                                          Resolution width, Resolution height) {
   std::unique_ptr<Camera> cam{nullptr};
