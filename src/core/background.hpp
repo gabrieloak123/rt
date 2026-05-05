@@ -2,6 +2,7 @@
 #define BACKGROUND_HPP
 
 #include <array>
+#include <initializer_list>
 
 #include "common.hpp"
 #include "paramset.hpp"
@@ -40,7 +41,7 @@ private:
                                 double t) const;
 };
 
-Background *create_color_background(std::string_view type, const ParamSet &ps);
+std::shared_ptr<Background> create_color_background(std::string_view type, const ParamSet &ps);
 } // namespace rt
 
 #endif // BACKGROUND_HPP

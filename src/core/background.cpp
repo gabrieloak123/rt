@@ -1,6 +1,7 @@
 #include <array>
 #include <fstream>
 #include <iomanip>
+#include <memory>
 #include <sstream>
 
 #include "background.hpp"
@@ -24,7 +25,7 @@ RGBColor Background::linear_interpolation(const RGBColor &A, const RGBColor &B,
                                           double t) const {
   return RGBColor{static_cast<float>((1 - t) * A.red + t * B.red),
                   static_cast<float>((1 - t) * A.green + t * B.green),
-                  static_cast<float>((1 - t) * A.blue + t * B.blue)};
+                  static_cast<float>((1 - t) * A.blue + t * B.blue), "rgb"};
 };
 
 RGBColor Background::sample(real_type u, real_type v) const {
@@ -61,7 +62,7 @@ void Background::dummy() {
 
 // @author = Selan Santos
 // ===
-Background *create_color_background(std::string_view type, const ParamSet &ps) {
+std::shared_ptr<Background> create_color_background(std::string_view type, const ParamSet &ps) {
   // List of name ids for each corner of the background.
   std::array<std::string, 4> corner_name{"tl", "bl", "br", "tr"};
   RGBColor black = RGBColor();
@@ -73,8 +74,8 @@ Background *create_color_background(std::string_view type, const ParamSet &ps) {
     // default color is black
     auto color_type = ps.retrieve<std::string>("color_type", "rgb");
     RGBColor single_color{ps.retrieve<RGBColor>("color", black), color_type};
-    return new Background(
-        {single_color, single_color, single_color, single_color});
+    return std::make_shared<Background>(
+        std::array{single_color, single_color, single_color, single_color});
   }
   if (type == "4_colors") {
     // List of color from the scene to be passed onto the constructor.
@@ -92,7 +93,7 @@ Background *create_color_background(std::string_view type, const ParamSet &ps) {
           static_cast<float>(color.green ),
           static_cast<float>(color.blue)};
     }
-    return new Background(color_list);
+    return std::make_shared<Background>(color_list);
   }
   // If we got here it means we received an invalid colored background
   // specification.
@@ -101,7 +102,7 @@ Background *create_color_background(std::string_view type, const ParamSet &ps) {
          "specified "
       << std::quoted(type) << ", using black background.";
   WARNING(oss.str());
-  return new Background({black, black, black, black});
+  return std::make_shared<Background>(std::array{black, black, black, black});
 }
 // ===
 
