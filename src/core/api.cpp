@@ -152,6 +152,9 @@ std::unique_ptr<Integrator> API::make_integrator(const ParamSet& ps){
   if(integrator_type == "flat"){
     inter = std::make_unique<RayCastIntegrator>(m_render_options->camera);
   }
+  else if(integrator_type == "normal_map"){
+    inter = std::make_unique<NormalMapIntegrator>(m_render_options->camera);
+  }
   else{
     WARNING(string{"Integrator \""} + integrator_type + string{"\" unknown."});
   }
