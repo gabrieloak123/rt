@@ -1,39 +1,6 @@
-#include "scenes.hpp"
-#include "paramset.hpp"
-#include "ssmath/vec3.hpp"
-#include <memory>
+#include "sphere.hpp"
 
-namespace rt {
-
-    
-void PrimitiveList::add(std::shared_ptr<Primitive> object) {
-    primitives.push_back(object);
-}
-
-bool PrimitiveList::intersect(const Ray& ray, Surfel* isect) const {
-    Surfel temp_isect;
-    bool hit_anything = false;
-    for (const auto& object : primitives) {
-        if (object->intersect(ray, &temp_isect)) {
-            hit_anything = true;
-            if (isect) {
-                *isect = temp_isect;
-            }
-        }
-    }
-    return hit_anything;
-}
-
-bool PrimitiveList::intersect_p(const Ray& ray) const  {
-    for (const auto& object : primitives) {
-        if (object->intersect_p(ray)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-
+namespace rt{
 Sphere::Sphere(Point3 center, float radius,std::shared_ptr<Material> mat)
     : center(center), radius(radius) {
       this->material = mat;
@@ -114,13 +81,4 @@ bool Sphere::intersect_p(const Ray &r) const {
 
   return false;
 }
-
-} // namespace rt
-
-
-bool rt::Scene::intersect(const Ray& ray, Surfel *isect) const{
-  return aggregate ? aggregate->intersect(ray, isect) : false;
-}
-bool rt::Scene::intersect_p(const Ray& ray) const {
-    return aggregate ? aggregate->intersect_p(ray) : false;
 }

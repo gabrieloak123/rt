@@ -4,12 +4,15 @@
 #include <memory>
 #include <unordered_map>
 
-#include "integrator.hpp"
 #include "scenes.hpp"
 #include "background.hpp"
 #include "camera.hpp"
+#include "error.hpp"
 #include "film.hpp"
-#include "paramset.hpp"
+#include "parser.hpp"
+#include "include_integrator.hpp"
+#include "include_primitive.hpp"
+#include "include_material.hpp"
 
 namespace rt {
 

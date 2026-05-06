@@ -1,3 +1,6 @@
+#ifndef PARSER_HPP
+#define PARSER_HPP
+
 #include <algorithm>
 #include <functional>
 
@@ -38,3 +41,5 @@ bool is_valid_attribute(std::string_view tag_name, std::string_view attribute_na
 void parse_attribute(const string &attr_name, const string &attr_content, rt::ParamSet *ps);
 
 void print(rt::RunningOptions run_opt);
+
+#endif //< PARSER_HPP

@@ -7,6 +7,7 @@
 #include "scenes.hpp"
 #include <memory>
 
+namespace rt{
 class Integrator {
     public:
         virtual ~Integrator() = default;
@@ -25,18 +26,7 @@ class SamplerIntegrator : public Integrator {
         virtual void preprocess(const rt::Scene& scene){};
 
 };
-
-class RayCastIntegrator : public SamplerIntegrator {
-    public:
-        RayCastIntegrator(std::shared_ptr<rt::Camera> cam) : SamplerIntegrator(cam) {}
-        std::optional<rt::RGBColor> Li(const Ray& ray, const rt::Scene& scene) const override;
-};
-
-class NormalMapIntegrator : public SamplerIntegrator {
-    public:
-        NormalMapIntegrator(std::shared_ptr<rt::Camera> cam) : SamplerIntegrator(cam) {}
-        std::optional<rt::RGBColor> Li(const Ray& ray, const rt::Scene& scene) const override;
-};
+}
 
 
 #endif

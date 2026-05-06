@@ -5,14 +5,7 @@
 #include <utility>
 
 #include "api.hpp"
-#include "camera.hpp"
-#include "common.hpp"
-#include "error.hpp"
-#include "film.hpp"
-#include "integrator.hpp"
-#include "paramset.hpp"
-#include "parser.hpp"
-#include "scenes.hpp"
+
 
 namespace rt {
 
