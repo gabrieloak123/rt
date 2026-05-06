@@ -3,8 +3,6 @@
 #define SCENES_HPP
 
 #include "background.hpp"
-#include "common.hpp"
-#include "paramset.hpp"
 #include "primitive.hpp"
 #include "surfel.hpp"
 #include "ray.hpp"
