@@ -203,9 +203,11 @@ template<typename T>
                 e[0] *= k; e[1] *= k; e[2] *= k;
             }
 
-            /** @brief Retorna uma cópia normalizada de um vetor 3D fornecido. */
-            inline vec3<T> unit_vec(vec3<T> v){return v / v.length();};
+            
         };
+        /** @brief Retorna uma cópia normalizada de um vetor 3D fornecido. */
+            template<typename T>
+            inline vec3<T> unit_vec(vec3<T> v){return v / v.length();};
             /**
               * @brief Multiplica um vetor por um escalar t.
               * @param t Escalar que está multiplicando o vetor.
