@@ -17,7 +17,7 @@ std::optional<rt::RGBColor> RayCastIntegrator::Li(const Ray& ray, const rt::Scen
     // Assign diffuse color to L.
 
     if(fm){
-        L = fm->get_color();
+        L = fm->kd();
     }
     else{
         L = rt::RGBColor(255, 0, 255);
