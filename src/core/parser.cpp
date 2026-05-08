@@ -371,6 +371,7 @@ std::unordered_map<string, vector<string>> tag_catalog{
         "scale",
         "from",
         "to",
+        "attenuation",
       }
     },
     {
