@@ -7,7 +7,7 @@ namespace rt {
 
 /// Saves an image as a **binary** PPM file.
 bool save_ppm6(const std::vector<RGBColor> data, Resolution w, Resolution h,
-               const std::string &file_name_, Resolution d) {
+               const std::string &file_name_, bool gamma) {
   std::ofstream ofs(file_name_, std::ios::out | std::ios::binary);
 
   if (!ofs.is_open()) {
@@ -22,9 +22,17 @@ bool save_ppm6(const std::vector<RGBColor> data, Resolution w, Resolution h,
   buffer.reserve(w * h * 3);
 
   for (const auto &color : data) {
-    buffer.push_back(static_cast<char>(color.red));
-    buffer.push_back(static_cast<char>(color.green));
-    buffer.push_back(static_cast<char>(color.blue));
+    double r = std::clamp(color.red, 0.0, 1.0);
+    double g = std::clamp(color.green, 0.0, 1.0);
+    double b = std::clamp(color.blue, 0.0, 1.0);
+    if(gamma){
+      r = apply_gamma(r);
+      g = apply_gamma(g);
+      b = apply_gamma(b);
+    }
+    buffer.push_back(static_cast<char>(r * 255.0));
+    buffer.push_back(static_cast<char>(g * 255.0));
+    buffer.push_back(static_cast<char>(b * 255.0));
   }
 
   ofs.write(buffer.data(), buffer.size());
@@ -35,7 +43,7 @@ bool save_ppm6(const std::vector<RGBColor> data, Resolution w, Resolution h,
 
 /// Saves an image as a **ascii** PPM file.
 bool save_ppm3(const std::vector<RGBColor> data, Resolution w, Resolution h,
-               const std::string &file_name_, Resolution d) {
+               const std::string &file_name_, bool gamma) {
 
   std::ofstream ofs(file_name_);
 
@@ -46,8 +54,17 @@ bool save_ppm3(const std::vector<RGBColor> data, Resolution w, Resolution h,
   ofs << "P3\n" << w << ' ' << h << "\n255\n";
 
   for (auto &color : data) {
-    ofs << (int)color.red << ' ' << (int)color.green << ' ' << (int)color.blue
-        << '\n';
+    double r = std::clamp(color.red, 0.0, 1.0);
+    double g = std::clamp(color.green, 0.0, 1.0);
+    double b = std::clamp(color.blue, 0.0, 1.0);
+
+    if(gamma){
+      r = apply_gamma(r);
+      g = apply_gamma(g);
+      b = apply_gamma(b);
+    }
+
+    ofs << (int) r * 255.0 << ' ' << (int) g * 255.0 << ' ' << (int) b * 255.0 << '\n';
   }
 
   ofs.close();
@@ -55,15 +72,25 @@ bool save_ppm3(const std::vector<RGBColor> data, Resolution w, Resolution h,
 }
 
 bool save_png(const std::vector<RGBColor> data, Resolution w, Resolution h,
-              const std::string &file_name_, Resolution d) {
+              const std::string &file_name_, bool gamma) {
 
   vector<uint64_t> img;
   img.reserve(w * h * 4);
 
   for (auto &color : data) {
-    img.push_back(color.red);
-    img.push_back(color.green);
-    img.push_back(color.blue);
+    double r = std::clamp(color.red, 0.0, 1.0);
+    double g = std::clamp(color.green, 0.0, 1.0);
+    double b = std::clamp(color.blue, 0.0, 1.0);
+    
+    if(gamma){
+      r = apply_gamma(r);
+      g = apply_gamma(g);
+      b = apply_gamma(b);
+    }
+
+    img.push_back(static_cast<uint64_t>(r * 255.0));
+    img.push_back(static_cast<uint64_t>(g * 255.0));
+    img.push_back(static_cast<uint64_t>(b * 255.0));
     img.push_back(255); // blk = 255.
   }
 
