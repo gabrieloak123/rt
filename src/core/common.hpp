@@ -11,7 +11,7 @@
 #include <iostream>
 #include <vector>
 
-using byte = u_int16_t;
+using byte = uint16_t;
 
 using std::cout;
 using std::endl;
@@ -44,9 +44,9 @@ struct RunningOptions {
 };
 
 struct RGBColor {
-  float red;
-  float green;
-  float blue;
+  double red;
+  double green;
+  double blue;
 
   RGBColor() : red(0), green(0), blue(0) {};
   RGBColor(Vec3 color, std::string color_type){
@@ -55,34 +55,34 @@ struct RGBColor {
   RGBColor(RGBColor color, std::string color_type){
      *this = RGBColor(color.red, color.green, color.blue, color_type);
   };
-  RGBColor(float red, float green, float blue, std::string color_type){
+  RGBColor(double red, double green, double blue, std::string color_type){
     
     if(color_type == "rgb"){
-      this->red = red;
-      this->green = green;
-      this->blue = blue;
+      this->red =  red / 255.0;
+      this->green = green / 255.0;
+      this->blue =  blue / 255.0;
     }
     else if (color_type == "spectre"){
-      this->red = 255.0f * red;
-      this->green = 255.0f * green;
-      this->blue = 255.0f * blue;
+      this->red = red;
+      this->green =  green;
+      this->blue = blue;
     }
   }
 
-  RGBColor(float red, float green, float blue) : red(red), green(green), blue(blue) {};
+  RGBColor(double red, double green, double blue) : red(red), green(green), blue(blue) {};
 
-  RGBColor operator*(const double& t  )const {return RGBColor(red * static_cast<float>(t), green * static_cast<float>(t), blue * static_cast<float>(t));}
+  RGBColor operator*(const double& t  )const {return RGBColor(red * static_cast<double>(t), green * static_cast<double>(t), blue * static_cast<double>(t));}
   RGBColor operator*(const RGBColor& c) const{return RGBColor(red * c.red, green * c.green, blue * c.blue);};
   RGBColor operator+(const RGBColor& c)const {return RGBColor(red + c.red, green + c.green, blue + c.blue);};
   bool operator==(const RGBColor& c) const {return red == c.red && green == c.green && blue == c.blue;};
 
-  float&    operator[](const size_t index){
+  double&    operator[](const size_t index){
     if(index == 0)return red;
     if(index == 1)return green;
     return blue;
   };
 
-  float operator[](const size_t index) const {
+  double operator[](const size_t index) const {
     if(index == 0)return red;
     if(index == 1)return green;
     return blue;
