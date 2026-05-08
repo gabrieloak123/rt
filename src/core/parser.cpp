@@ -341,6 +341,7 @@ std::unordered_map<string, vector<string>> tag_catalog{
       {
         "type",
         "depth",
+        "blinn_phong"
       }
     },
     {
