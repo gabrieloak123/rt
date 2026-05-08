@@ -24,13 +24,13 @@ void Film::add(const Pixel &p, const RGBColor &c) {
 void Film::write_image() const {
   switch (m_img_type) {
   case ImageType_e::PNG:
-    rt::save_png(color_buffer, m_x_res, m_y_res, m_filename);
+    rt::save_png(color_buffer, m_x_res, m_y_res, m_filename, m_gamma_correction);
     break;
   case ImageType_e::PPM3:
-    rt::save_ppm3(color_buffer, m_x_res, m_y_res, m_filename);
+    rt::save_ppm3(color_buffer, m_x_res, m_y_res, m_filename, m_gamma_correction);
     break;
   case ImageType_e::PPM6:
-    rt::save_ppm6(color_buffer, m_x_res, m_y_res, m_filename);
+    rt::save_ppm6(color_buffer, m_x_res, m_y_res, m_filename, m_gamma_correction);
     break;
   default:
     break;
