@@ -25,14 +25,15 @@ namespace rt{
         }
 
     bool Cube::intersect(const Ray &r, Surfel *sf) const {
+        bool hit{false};
             for (const auto& face : faces) {
                 if (face->intersect(r, sf)) {
-                    return true;
+                    hit = true;
                 }
             }
-            return false;
+            return hit;
         }
-        
+
     bool Cube::intersect_p(const Ray &r) const {
             for (const auto& face : faces) {
                 if (face->intersect_p(r)) return true;
