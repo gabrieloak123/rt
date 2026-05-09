@@ -328,6 +328,15 @@ std::unordered_map<string, vector<string>> tag_catalog{
         "type",
         "radius",
         "center",
+        "size",
+        "height",
+        "base_size",
+        "r_inner",
+        "r_outer",
+        "p0",
+        "p1",
+        "p2",
+        "p3",
       }
     },
     {
@@ -412,8 +421,18 @@ std::unordered_map<string, ConverterFunction> converters{
     {"filename", convert<string>},
     {"img_type", convert<string>},
     {"gamma_corrected", convert<bool>},
+    // Object attributes
     {"radius", convert<double>},
     {"center", convert<Point3>},
+    {"size", convert<double>},
+    {"height", convert<double>},
+    {"base_size", convert<double>},
+    {"r_inner", convert<double>},
+    {"r_outer", convert<double>},
+    {"p0", convert<Point3>},
+    {"p1", convert<Point3>},
+    {"p2", convert<Point3>},
+    {"p3", convert<Point3>},
 };
 
 /*!
