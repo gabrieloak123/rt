@@ -102,6 +102,7 @@ template<typename T>
               */
             constexpr vec3<T> operator*(const T t) const {return vec3<T>(e[0] * t, e[1] * t, e[2] * t);};
 
+            constexpr vec3<T> operator*(const vec3<T> &v2)const{return vec3<T>(e[0] * v2[0], e[1] * v2[1], e[2] * v2[2]);};
             /**
               * @brief Divide um vetor por um escalar t.
               * @param t Escalar que está dividindo o vetor.
@@ -203,9 +204,11 @@ template<typename T>
                 e[0] *= k; e[1] *= k; e[2] *= k;
             }
 
-            /** @brief Retorna uma cópia normalizada de um vetor 3D fornecido. */
-            inline vec3<T> unit_vec(vec3<T> v){return v / v.length();};
+            
         };
+        /** @brief Retorna uma cópia normalizada de um vetor 3D fornecido. */
+            template<typename T>
+            inline vec3<T> unit_vec(vec3<T> v){return v / v.length();};
             /**
               * @brief Multiplica um vetor por um escalar t.
               * @param t Escalar que está multiplicando o vetor.

@@ -5,11 +5,8 @@
 #include "tinyxml2/tinyxml2.h"
 #include <CLI11/CLI11.hpp>
 
+
 #include "api.hpp"
-#include "camera.hpp"
-#include "common.hpp"
-#include "error.hpp"
-#include "paramset.hpp"
 #include "parser.hpp"
 
 void print(vector<string> v) {
@@ -316,45 +313,84 @@ std::unordered_map<string, vector<string>> tag_catalog{
          "look_at",
          "up",
      }},
-    {"material",
-     {
-         "type",
-         "color_type",
-         "color",
-     }},
-    {"object",
-     {
-         "type",
-         "radius",
-         "center",
-     }},
-    {"integrator",
-     {
-         "type",
-         // Depth Integrator
-         "zmin",
-         "zmax",
-         "near_color",
-         "far_color",
-     }},
-    {"make_named_material",
-     {
-         "type",
-         "name",
-         "color_type",
-         "color",
-     }},
-    {"named_material",
-     {
-         "name",
-     }},
-    {"include",
-     {
-         "filename",
-     }},
+     {"material",
+      {
+        "type",
+        "color_type",
+        "color",
+      }
+     },
+     {"object",
+      {
+        "type",
+        "radius",
+        "center",
+        "size",
+        "height",
+        "base_size",
+        "r_inner",
+        "r_outer",
+        "point",
+        "normal",
+        "p0",
+        "p1",
+        "p2",
+        "p3",
+      }
+    },
     {
-        "render_again",
-        {""}, // no attributes
+      "aggregator", 
+      {
+        "type",
+      }
+    },
+    {
+      "integrator",
+      {
+        "type",
+        "depth",
+        "blinn_phong"
+      }
+    },
+    {
+      "make_named_material",
+      {
+        "type",
+        "name",
+        "color_type",
+        "color",
+        "ambient",
+        "diffuse",
+        "specular",
+        "glossiness"
+      }
+    },
+    {
+      "named_material",
+      {
+        "name",
+      }
+    },
+    {
+      "light_source",
+      {
+        "type",
+        "i",
+        "scale",
+        "from",
+        "to",
+        "attenuation",
+      }
+    },
+    {
+      "include",
+      {
+        "filename",
+      }
+    },
+    {
+      "render_again",
+      {""},   // no attributes
     },
     {
         "world_begin",
@@ -368,17 +404,14 @@ std::unordered_map<string, vector<string>> tag_catalog{
 
 /// Maps the tag name to its corresponding API function.
 std::unordered_map<string, std::function<void(const ParamSet &)>> api_functions{
-    {"background", API::background},
-    {"camera", API::camera},
-    {"lookat", API::look_at},
-    {"world_begin", API::world_begin},
-    {"world_end", API::world_end},
-    {"film", API::film},
-    {"material", API::material},
-    {"object", API::object},
-    {"integrator", API::integrator},
-    {"make_named_material", API::make_named_material},
-    {"named_material", API::named_material},
+
+    {"background", API::background}, {"camera", API::camera},
+    {"lookat", API::look_at},        {"world_begin", API::world_begin},
+    {"world_end", API::world_end},   {"film", API::film},
+    {"material", API::material},     {"object", API::object},
+    {"integrator", API::integrator}, {"make_named_material", API::make_named_material},
+    {"named_material", API::named_material}, {"light_source", API::light_source},
+      /*TODO: {"aggregator", API::agregator}*/
 };
 
 /// Maps convertion function to an attribute name.
@@ -412,13 +445,36 @@ std::unordered_map<string, ConverterFunction> converters{
     {"filename", convert<string>},
     {"img_type", convert<string>},
     {"gamma_corrected", convert<bool>},
+    // Object attributes
     {"radius", convert<double>},
     {"center", convert<Point3>},
 	// Integrator
-	{"zmin", convert<double>},
-	{"zmax", convert<double>},
+	  {"zmin", convert<double>},
+	  {"zmax", convert<double>},
     {"near_color", convert<RGBColor>},
     {"far_color", convert<RGBColor>},
+    {"size", convert<double>},
+    {"height", convert<double>},
+    {"base_size", convert<double>},
+    {"r_inner", convert<double>},
+    {"r_outer", convert<double>},
+    {"point", convert<Point3>},
+    {"normal", convert<Vec3>},
+    {"p0", convert<Point3>},
+    {"p1", convert<Point3>},
+    {"p2", convert<Point3>},
+    {"p3", convert<Point3>},
+    // Light attributes
+    {"i", convert<RGBColor>},
+    {"scale", convert<RGBColor>},
+    {"from", convert<Point3>},
+    {"to", convert<Vec3>},
+    {"attenuation", convert<Vec3>},
+    {"ambient", convert<Vec3>},
+    {"diffuse", convert<Vec3>},
+    {"specular", convert<Vec3>},
+    {"glossiness", convert<double>},
+    {"depth", convert<double>},
 };
 
 /*!
@@ -556,6 +612,7 @@ void Parser::parse_scene(const string filename) {
         ERROR(oss.str());
       }
       // Recursive call to process subfile.
+      
       parse_scene(filename.c_str());
       continue; // This tag doesn't have an API function associated with; get
                 // next tag.

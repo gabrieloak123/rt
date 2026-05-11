@@ -1,0 +1,13 @@
+<RT3>
+    <lookat look_from="5 4 -16" look_at="0 6 0" up="0 1 0" />
+    <camera type="perspective" fovy="45" /> 
+    <integrator type="blinn_phong" depth="1" />
+    <film type="image" w_res="1920" h_res="1200" filename="all_lights.png" img_type="png" gamma_corrected="true" />
+
+    <!-- Objects storage -->
+    <aggregator type="list"/>
+
+    <!-- The Scene -->
+    <include filename="scenes/proj-05/teste_wb.xml" />
+
+</RT3>

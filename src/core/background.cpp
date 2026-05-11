@@ -22,13 +22,13 @@ Background::Background(const std::array<RGBColor, 4> &colors) {
 }
 
 RGBColor Background::linear_interpolation(const RGBColor &A, const RGBColor &B,
-                                          double t) {
-  return RGBColor{static_cast<float>((1 - t) * A.red + t * B.red),
-                  static_cast<float>((1 - t) * A.green + t * B.green),
-                  static_cast<float>((1 - t) * A.blue + t * B.blue), "rgb"};
+                                          double t) {            
+  return RGBColor{static_cast<double>((1 - t) * A.red + t * B.red),
+                  static_cast<double>((1 - t) * A.green + t * B.green),
+                  static_cast<double>((1 - t) * A.blue + t * B.blue)};
 };
 
-RGBColor Background::sample(real_type u, real_type v) const {
+RGBColor Background::sample(real_type u, real_type v) const {  
   const auto bottom_horizontal =
       linear_interpolation(m_corners[BOTTOM_LEFT], m_corners[BOTTOM_RIGHT], u);
   const auto top_horizontal =
@@ -39,7 +39,6 @@ RGBColor Background::sample(real_type u, real_type v) const {
 
   return bilerp;
 };
-
 
 // @author = Selan Santos
 // ===
@@ -69,10 +68,8 @@ std::shared_ptr<Background> create_color_background(std::string_view type, const
       // black by default again
       auto color_type = ps.retrieve<std::string>("color_type", "rgb");
       RGBColor color{ps.retrieve<RGBColor>(label, black), color_type};
-      color_list[idx++] = RGBColor{
-          static_cast<float>(color.red ),
-          static_cast<float>(color.green ),
-          static_cast<float>(color.blue)};
+      
+      color_list[idx++] = color;
     }
     return std::make_shared<Background>(color_list);
   }

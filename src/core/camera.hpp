@@ -43,6 +43,8 @@ public:
   virtual Ray generate_ray(int i, int j) = 0;
   Point3 get_origin() { return m_origin;};
 
+  virtual Point3 get_origin(){return m_origin;};
+  
   /**
    * @brief Function that will retrieve the data and create a camera.
    * @param camera The ParamSet of the camera tag.
