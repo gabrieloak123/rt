@@ -1,0 +1,54 @@
+<RT3>
+    <world_begin/>
+
+        <background type="4_colors" bl="18 10 144" tl="0 0 10" tr="0 0 10" br="18 10 144" />
+
+        <light_source type="ambient" I="0.1 0.1 0.1" scale="0.05 0.05 0.05" />
+        
+        <light_source type="directional" I="0.8 0.8 0.8" scale="0.1 0.1 0.1" from="-5 7 -12" to="0 1 0" />
+        <light_source type="directional" I="0.8 0.8 0.8" scale="0.1 0.1 0.1" from="5 4 -16" to="0 6.5 0" />
+
+
+
+        <make_named_material type="blinn" name="gold"     ambient="0.4 0.4 0.4" diffuse ="1 0.65 0.0"   specular ="0.8 0.6 0.2"  glossiness ="256"/>
+        <make_named_material type="blinn" name="grey"     ambient="0.1 0.1 0.1" diffuse ="0.7 0.7 0.7"  specular ="0 0 0"        glossiness ="0"/>
+        <make_named_material type="blinn" name="redish"   ambient="0.6 0.6 0.6" diffuse ="0.9 0.2 0.1"  specular ="0.8 0.8 0.8"  glossiness ="64"/>
+        <make_named_material type="blinn" name="greenish" ambient="0.6 0.6 0.6" diffuse ="0.2 0.9 0.2"  specular ="0.8 0.8 0.8"  glossiness ="256"/>
+        <make_named_material type="blinn" name="blueish"  ambient="0.6 0.6 0.6" diffuse ="0.1 0.2 0.9"  specular ="0.8 0.8 0.8"  glossiness ="16"/>
+        <make_named_material type="blinn" name="white"    ambient="0.8 0.8 0.85" diffuse ="0.8 0.8 0.85"  specular ="0.8 0.8 0.8"  glossiness ="256"/>
+
+        <named_material name="redish"/>
+        <object type="cube" center="0 1 0" size="0.75" />
+
+        <named_material name="grey"/>
+        <object type="plane" point="0 0 0" normal="0 1 0" />
+
+        <named_material name="greenish" />
+        <object type="triangle" p0="1 1.5 -1" p1="1 1.5 1" p2="0 3.5 0"/>
+        <object type="triangle" p0="-1 1.5 1" p1="-1 1.5 -1" p2="0 3.5 0"/>
+        <object type="triangle" p0="1 1.5 -1" p1="-1 1.5 -1" p2="0 3.5 0"/>
+        <object type="triangle" p0="-1 1.5 1" p1="1 1.5 1" p2="0 3.5 0"/>
+
+        <object type="triangle" p0="1 3 -1" p1="1 3 1" p2="0 5 0"/>
+        <object type="triangle" p0="-1 3 1" p1="-1 3 -1" p2="0 5 0"/>
+        <object type="triangle" p0="1 3 -1" p1="-1 3 -1" p2="0 5 0"/>
+        <object type="triangle" p0="-1 3 1" p1="1 3 1" p2="0 5 0"/>
+
+        <object type="triangle" p0="1 4.25 -1" p1="1 4.25 1" p2="0 6.25 0"/>
+        <object type="triangle" p0="-1 4.25 1" p1="-1 4.25 -1" p2="0 6.25 0"/>
+        <object type="triangle" p0="1 4.25 -1" p1="-1 4.25 -1" p2="0 6.25 0"/>
+        <object type="triangle" p0="-1 4.25 1" p1="1 4.25 1" p2="0 6.25 0"/>
+
+        <named_material name="gold"/>
+        <object type="star" center="0 6.5 0" r_outer="1" r_inner="0.5"/>
+
+        <named_material name="white"/>
+        <object type="star" center="0 20 60" r_outer="1" r_inner="0.5"/>
+        <object type="star" center="-50 20 20" r_outer="1" r_inner="0.5"/>
+
+        <named_material name="redish"/>
+        <object type="sphere" center="-0.5 3 -1" radius="0.3" />
+        <object type="sphere" center=" 0.5 3 -1" radius="0.3" />
+
+    <world_end/>
+</RT3>
