@@ -5,6 +5,7 @@
 #include "common.hpp"
 #include "ray.hpp"
 #include "scenes.hpp"
+#include "visibilityTester.hpp"
 #include <memory>
 
 namespace rt{
