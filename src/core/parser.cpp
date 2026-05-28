@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "common.hpp"
 #include "tinyxml2/tinyxml2.h"
 #include <CLI11/CLI11.hpp>
 
@@ -318,6 +319,11 @@ std::unordered_map<string, vector<string>> tag_catalog{
         "type",
         "color_type",
         "color",
+        "ambient",
+        "diffuse",
+        "specular",
+        "glossiness",
+        "color_map",
       }
      },
      {"object",
@@ -349,7 +355,9 @@ std::unordered_map<string, vector<string>> tag_catalog{
       {
         "type",
         "depth",
-        "blinn_phong"
+        "blinn_phong",
+        "mapping_interval",
+        "n_intervals",
       }
     },
     {
@@ -362,7 +370,8 @@ std::unordered_map<string, vector<string>> tag_catalog{
         "ambient",
         "diffuse",
         "specular",
-        "glossiness"
+        "glossiness",
+        "color_map",
       }
     },
     {
@@ -449,6 +458,7 @@ std::unordered_map<string, ConverterFunction> converters{
     // Object attributes
     {"radius", convert<double>},
     {"center", convert<Point3>},
+    {"color_map", convert<double>},
 	// Integrator
 	  {"zmin", convert<double>},
 	  {"zmax", convert<double>},
@@ -465,6 +475,8 @@ std::unordered_map<string, ConverterFunction> converters{
     {"p1", convert<Point3>},
     {"p2", convert<Point3>},
     {"p3", convert<Point3>},
+    {"mapping_interval", convert<double>},
+    {"n_intervals", convert<int>},
     // Light attributes
     {"i", convert<RGBColor>},
     {"scale", convert<RGBColor>},
@@ -477,6 +489,7 @@ std::unordered_map<string, ConverterFunction> converters{
     {"glossiness", convert<double>},
     {"depth", convert<double>},
     {"world_radius", convert<double>},
+    
 };
 
 /*!

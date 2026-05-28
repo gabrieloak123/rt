@@ -5,6 +5,10 @@
 #include <utility>
 
 #include "api.hpp"
+#include "common.hpp"
+#include "scenes.hpp"
+#include "toonIntegrator.hpp"
+#include "toon_material.hpp"
 
 
 namespace rt {
@@ -188,6 +192,12 @@ std::unique_ptr<Integrator> API::make_integrator(const ParamSet &ps) {
     auto depth = ps.retrieve<double>("depth", 1.0f);
     inter = std::make_unique<BlinnPhongIntegrator>(m_render_options->camera, depth);
   }
+  else if(integrator_type == "toon"){
+    auto mapping_interval = ps.retrieve<std::vector<double>>("mapping_interval", {});
+    auto n_intervals = ps.retrieve<int>("n_intervals", 0);
+
+    inter = std::make_unique<ToonIntegrator>(m_render_options->camera, mapping_interval, n_intervals);
+  }
   else{
     WARNING(string{"Integrator \""} + integrator_type + string{"\" unknown."});
   }
@@ -312,7 +322,7 @@ void API::camera(const ParamSet &ps) {
     if(type == "flat"){
       auto color_type = ps.retrieve<std::string>("color_type", "rgb");
       auto color = RGBColor(ps.retrieve<RGBColor>("color", RGBColor()), color_type);
-      m_render_options->current_material =  std::shared_ptr<Material>(new FlatMaterial(color));
+      m_render_options->current_material =  std::make_shared<FlatMaterial>(color);
     }
     else if (type == "blinn"){
       auto color_type = ps.retrieve<std::string>("color_type", "spectre");
@@ -322,9 +332,18 @@ void API::camera(const ParamSet &ps) {
 
 
       auto glossiness = ps.retrieve<double>("glossiness", 0.0f);
-      std::cout << "Criando Material Blinn - Difuso: " 
-          << diffuse.red << " " << diffuse.green << " " << diffuse.blue << "\n";
       m_render_options->current_material = std::make_shared<BlinnPhongMaterial>(diffuse, specular, ambient, glossiness);
+    }
+    else if (type == "toon"){
+      auto color_map = ps.retrieve<std::vector<double>>("color_map", {});
+      auto color_type = ps.retrieve<std::string>("color_type", "rgb");
+      std::vector<RGBColor> colors;
+
+      for(size_t i{0}; i + 2 < color_map.size(); i += 3){
+        colors.push_back(RGBColor(color_map[i], color_map[i + 1], color_map[i + 2], color_type));
+      }
+
+      m_render_options->current_material = std::make_shared<ToonMaterial>(colors);
     }
   }
 
@@ -419,11 +438,20 @@ void API::make_named_material(const ParamSet &ps) {
     auto diffuse = RGBColor(ps.retrieve<Vec3>("diffuse", {0, 0, 0}), color_type);
     auto specular = RGBColor(ps.retrieve<Vec3>("specular", {0, 0, 0}), color_type);
     auto glossiness = ps.retrieve<double>("glossiness", 0.0f);
-      std::cout << "Criando Material Blinn - Difuso: " 
-          << diffuse.red << " " << diffuse.green << " " << diffuse.blue << "\n";
 
     m_render_options->material_memory[material_id] = std::make_shared<BlinnPhongMaterial>(diffuse, specular, ambient, glossiness);
   }
+  else if (type == "toon"){
+      auto color_map = ps.retrieve<std::vector<double>>("color_map", {});
+      auto color_type = ps.retrieve<std::string>("color_type", "rgb");
+      std::vector<RGBColor> colors;
+
+      for(size_t i{0}; i + 2 < color_map.size(); i += 3){
+        colors.push_back(RGBColor(color_map[i], color_map[i + 1], color_map[i + 2], color_type));
+      }
+
+      m_render_options->material_memory[material_id] = std::make_shared<ToonMaterial>(colors);
+    }
 }
 
 void API::named_material(const ParamSet &ps) {
