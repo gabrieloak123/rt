@@ -380,6 +380,9 @@ std::unordered_map<string, vector<string>> tag_catalog{
         "from",
         "to",
         "attenuation",
+        "cutoff",
+        "falloff",
+        "world_radius",
       }
     },
     {
@@ -475,6 +478,9 @@ std::unordered_map<string, ConverterFunction> converters{
     {"specular", convert<Vec3>},
     {"glossiness", convert<double>},
     {"depth", convert<double>},
+    {"cutoff", convert<double>},
+    {"falloff", convert<double>},
+    {"world_radius", convert<int>},
 };
 
 /*!
