@@ -9,7 +9,7 @@
 
 namespace rt {
 
-    std::optional<RGBColor> BlinnPhongIntegrator::Li(const Ray& ray, const rt::Scene& scene) const {
+    std::optional<RGBColor> BlinnPhongIntegrator::Li(const Ray& ray, const rt::Scene& scene, int depth) const {
         RGBColor L(0, 0, 0);
         Surfel isect;
         if(!scene.intersect(ray, &isect)){
@@ -22,13 +22,18 @@ namespace rt {
         std::shared_ptr<BlinnPhongMaterial> fm{nullptr};
 
         fm = std::dynamic_pointer_cast<BlinnPhongMaterial>( isect.primitive->get_material());
+        if(!fm)return RGBColor{0, 0, 0};
 
         RGBColor ka = fm->ka();
         RGBColor kd = fm->kd();
         RGBColor ks = fm->ks();
+        RGBColor km = fm->km();
+        float    gg = fm->gg();
 
-        if(!fm)return RGBColor{0, 0, 0};
-
+        auto v = -ray.getDirection();
+        v.mk_unit_vec();
+        auto n = isect.n;
+        n.mk_unit_vec();
         
         for(auto& light : scene.lights){
             VisibilityTester vis;
@@ -45,12 +50,8 @@ namespace rt {
                 continue;
             }
             
-            auto n = isect.n;
-            n.mk_unit_vec();
             auto l = wi;
             l.mk_unit_vec();
-            auto v = -ray.getDirection();
-            v.mk_unit_vec();
             auto h = v + l;
             h.mk_unit_vec();
 
@@ -59,15 +60,26 @@ namespace rt {
 
             RGBColor specular{0, 0, 0};
 
-            if (diff_factor > 0.0) {
-                specular = ks * std::pow(std::max(0.0, dot(n, h)), fm->gg());
+            if (diff_factor > 0.0 && gg != 0) {
+                specular = ks * std::pow(std::max(0.0, dot(n, h)), gg);
             }
 
             L = L + Li * (diffuse + specular);
-        
-
+            
         }
 
+    
+        if(depth < max_depth){
+            auto rd = n * 2 - v;
+            rd.mk_unit_vec();
+
+            Ray reflected_ray = Ray(isect.p + rd * 0.001f, rd);
+            auto tempL = this->Li(reflected_ray, scene, depth + 1);
+
+            if(tempL.has_value()){
+                L = L + km * tempL.value();
+            }
+        }
 
         return RGBColor(L.red, L.green, L.blue, "spectre");
     }
