@@ -2,7 +2,7 @@
     <lookat look_from="0 0 -2" look_at="0 0 1" up="0 1 0" />
     <camera type="orthographic"  screen_window="-5.5 4.5 -1.5 1.5" /> 
     <integrator type="blinn_phong" depth="2" />
-    <film type="image" w_res="5000" h_res="1500" filename="row_of_spheres_gc.png" img_type="png" gamma_corrected="false" />
+    <film type="image" w_res="5000" h_res="1500" filename="row_of_spheres_gc.png" img_type="png" gamma_corrected="true" />
     <aggregator type="list"/>
     <world_begin/>
         <!-- <background type="single_color" color="70 130 180"/> -->

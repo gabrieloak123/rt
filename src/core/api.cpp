@@ -6,6 +6,8 @@
 
 #include "api.hpp"
 #include "common.hpp"
+#include "spot_light.hpp"
+#include "ssmath/vec3.hpp"
 #include "scenes.hpp"
 #include "toonIntegrator.hpp"
 #include "toon_material.hpp"
@@ -86,25 +88,25 @@ void API::hard_engine_reset() {
   /// TODO
 }
 
-
-void API::light_source(const ParamSet &ps){
+void API::light_source(const ParamSet &ps) {
   check_in_world_block_state("light_source()");
 
   auto type = ps.retrieve<std::string>("type", "unknown");
 
-  if(type == "unknown"){
-    ERROR("API::light_source(): Missing \"type\" specification for the light source.");
+  if (type == "unknown") {
+    ERROR("API::light_source(): Missing \"type\" specification for the light "
+          "source.");
   }
   auto color_type = ps.retrieve<string>("color_type", "spectre");
   auto I = RGBColor(ps.retrieve<RGBColor>("i", rt::RGBColor()), color_type);
   auto scale = RGBColor(ps.retrieve<RGBColor>("scale", {1, 1, 1}), color_type);
 
-  if(type == "point"){
+  if (type == "point") {
     auto from = ps.retrieve<Point3>("from", {0, 0, 0});
     auto attenuation = ps.retrieve<Vec3>("attenuation", {1, 0, 0});
-    m_render_options->light_sources.push_back(std::make_shared<PointLight>(from, I, scale, attenuation));
-    }
-  else if(type == "directional"){
+    m_render_options->light_sources.push_back(
+        std::make_shared<PointLight>(from, I, scale, attenuation));
+  } else if (type == "directional") {
     auto from = ps.retrieve<Point3>("from", {0, 0, 0});
     auto to = ps.retrieve<Vec3>("to", {0, 0, 0});
     auto world_radius = ps.retrieve<double>("world_radius", 0);
@@ -116,6 +118,13 @@ void API::light_source(const ParamSet &ps){
     m_render_options->light_sources.push_back(std::make_shared<AmbientLight>(I, scale));
   }
 
+    m_render_options->light_sources.push_back(
+        std::make_shared<SpotLight>(from, direction, cutoff, falloff, world_radius, I, scale, attenuation)
+	);
+  } else if (type == "ambient") {
+    m_render_options->light_sources.push_back(
+        std::make_shared<AmbientLight>(I, scale));
+  }
 }
 void API::film(const ParamSet &ps) {
   if (not check_in_setup_block_state("API::film()")) {
@@ -187,19 +196,13 @@ std::unique_ptr<Integrator> API::make_integrator(const ParamSet &ps) {
     auto zmin = ps.retrieve<double>("zmin", 0.0);
     auto zmax = ps.retrieve<double>("zmax", 1.0);
 
-    inter = std::make_unique<DepthMapIntegrator>(m_render_options->camera,
-                                                 zmin, zmax, near, far, depth);
-  } 
-  else if(integrator_type == "blinn_phong"){
-    inter = std::make_unique<BlinnPhongIntegrator>(m_render_options->camera, depth);
-  }
-  else if(integrator_type == "toon"){
-    auto mapping_interval = ps.retrieve<std::vector<double>>("mapping_interval", {});
-    auto n_intervals = ps.retrieve<int>("n_intervals", 0);
-
-    inter = std::make_unique<ToonIntegrator>(m_render_options->camera, mapping_interval, n_intervals, depth);
-  }
-  else{
+    inter = std::make_unique<DepthMapIntegrator>(m_render_options->camera, zmin,
+                                                 zmax, near, far);
+  } else if (integrator_type == "blinn_phong") {
+    auto depth = ps.retrieve<double>("depth", 1.0f);
+    inter =
+        std::make_unique<BlinnPhongIntegrator>(m_render_options->camera, depth);
+  } else {
     WARNING(string{"Integrator \""} + integrator_type + string{"\" unknown."});
   }
   return inter;
@@ -236,8 +239,9 @@ void API::world_end(const ParamSet &ps) {
     primitive_list->add(obj);
   }
 
-
-  auto scene = std::make_unique<Scene>(primitive_list, m_render_options->background, m_render_options->light_sources);
+  auto scene =
+      std::make_unique<Scene>(primitive_list, m_render_options->background,
+                              m_render_options->light_sources);
 
   std::unique_ptr<Film> film =
       make_film(m_render_options->setup_params["film"]);
@@ -256,7 +260,8 @@ void API::world_end(const ParamSet &ps) {
     camera->film = std::move(film);
     m_render_options->camera = std::move(camera);
     m_render_options->scene = std::move(scene);
-    m_render_options->integrator = make_integrator(m_render_options->setup_params["integrator"]);
+    m_render_options->integrator =
+        make_integrator(m_render_options->setup_params["integrator"]);
   }
 
   // The scene has already been parsed and properly set up. It's time to render
@@ -313,42 +318,32 @@ void API::camera(const ParamSet &ps) {
   m_render_options->setup_params["camera"] = ps;
 }
 
-  void API::material(const ParamSet &ps) {
-    check_in_world_block_state("API::material");
-    auto type = ps.retrieve<std::string>("type", "unknown");
-    auto color_type = ps.retrieve<std::string>("color_type", "spectre");
-    auto mirror = ps.retrieve<RGBColor>("mirror", RGBColor(0, 0, 0, color_type));
-    if (type == "unknown") {
-      ERROR("API::material(): Missing \"type\" specification for the material.");
-    }
-
-    if(type == "flat"){
-      auto color_type = ps.retrieve<std::string>("color_type", "rgb");
-      auto color = RGBColor(ps.retrieve<RGBColor>("color", RGBColor()), color_type);
-      m_render_options->current_material =  std::make_shared<FlatMaterial>(color, mirror);
-    }
-    else if (type == "blinn"){
-      auto color_type = ps.retrieve<std::string>("color_type", "spectre");
-      RGBColor ambient(ps.retrieve<RGBColor>("ambient", {0,0,0}), color_type);
-      RGBColor diffuse(ps.retrieve<RGBColor>("diffuse", {0,0,0}), color_type);
-      RGBColor specular(ps.retrieve<RGBColor>("specular", {0,0,0}), color_type);
-
-
-      auto glossiness = ps.retrieve<double>("glossiness", 0.0f);
-      m_render_options->current_material = std::make_shared<BlinnPhongMaterial>(diffuse, specular, ambient, glossiness, mirror);
-    }
-    else if (type == "toon"){
-      auto color_map = ps.retrieve<std::vector<double>>("color_map", {});
-      auto color_type = ps.retrieve<std::string>("color_type", "rgb");
-      std::vector<RGBColor> colors;
-
-      for(size_t i{0}; i + 2 < color_map.size(); i += 3){
-        colors.push_back(RGBColor(color_map[i], color_map[i + 1], color_map[i + 2], color_type));
-      }
-
-      m_render_options->current_material = std::make_shared<ToonMaterial>(colors, mirror);
-    }
+void API::material(const ParamSet &ps) {
+  check_in_world_block_state("API::material");
+  auto type = ps.retrieve<std::string>("type", "unknown");
+  if (type == "unknown") {
+    ERROR("API::material(): Missing \"type\" specification for the material.");
   }
+
+  if (type == "flat") {
+    auto color_type = ps.retrieve<std::string>("color_type", "rgb");
+    auto color =
+        RGBColor(ps.retrieve<RGBColor>("color", RGBColor()), color_type);
+    m_render_options->current_material =
+        std::shared_ptr<Material>(new FlatMaterial(color));
+  } else if (type == "blinn") {
+    auto color_type = ps.retrieve<std::string>("color_type", "spectre");
+    RGBColor ambient(ps.retrieve<RGBColor>("ambient", {0, 0, 0}), color_type);
+    RGBColor diffuse(ps.retrieve<RGBColor>("diffuse", {0, 0, 0}), color_type);
+    RGBColor specular(ps.retrieve<RGBColor>("specular", {0, 0, 0}), color_type);
+
+    auto glossiness = ps.retrieve<double>("glossiness", 0.0f);
+    std::cout << "Criando Material Blinn - Difuso: " << diffuse.red << " "
+              << diffuse.green << " " << diffuse.blue << "\n";
+    m_render_options->current_material = std::make_shared<BlinnPhongMaterial>(
+        diffuse, specular, ambient, glossiness);
+  }
+}
 
 void API::object(const ParamSet &ps) {
   check_in_world_block_state("API::object");
@@ -362,53 +357,43 @@ void API::object(const ParamSet &ps) {
       ERROR("API::object(): Missing \"radius\" specification for the sphere.");
     }
     auto center = ps.retrieve<Point3>("center", {0, 0, 0});
-    m_render_options->elements.push_back( std::make_shared<Sphere>(center, radius, m_render_options->current_material));
-  }
-  else if (type == "triangle"){
+    m_render_options->elements.push_back(std::make_shared<Sphere>(
+        center, radius, m_render_options->current_material));
+  } else if (type == "triangle") {
     Point3 p0 = ps.retrieve<Point3>("p0", Point3(-1, 0, 0));
-    Point3 p1 = ps.retrieve<Point3>("p1", Point3( 1, 0, 0));
-    Point3 p2 = ps.retrieve<Point3>("p2", Point3( 0, 1, 0));
-    
-    m_render_options->elements.push_back(
-        std::make_shared<Triangle>(p0, p1, p2, m_render_options->current_material)
-    );
-  }
-  else if(type == "plane"){
+    Point3 p1 = ps.retrieve<Point3>("p1", Point3(1, 0, 0));
+    Point3 p2 = ps.retrieve<Point3>("p2", Point3(0, 1, 0));
+
+    m_render_options->elements.push_back(std::make_shared<Triangle>(
+        p0, p1, p2, m_render_options->current_material));
+  } else if (type == "plane") {
     Point3 p = ps.retrieve<Point3>("point", Point3(0, 0, 0));
-    Vec3 n   = ps.retrieve<Vec3>("normal", Vec3(0, 1, 0));
-    
+    Vec3 n = ps.retrieve<Vec3>("normal", Vec3(0, 1, 0));
+
     m_render_options->elements.push_back(
-        std::make_shared<Plane>(p, n, m_render_options->current_material)
-    );
-  }
-  else if (type == "star") {
-    Point3 center  = ps.retrieve<Point3>("center", Point3(0, 0, 0));
+        std::make_shared<Plane>(p, n, m_render_options->current_material));
+  } else if (type == "star") {
+    Point3 center = ps.retrieve<Point3>("center", Point3(0, 0, 0));
     double r_outer = ps.retrieve<double>("r_outer", 2.0);
     double r_inner = ps.retrieve<double>("r_inner", 0.8);
-    
-    m_render_options->elements.push_back(
-        std::make_shared<Star>(center, r_outer, r_inner, m_render_options->current_material)
-    );
-} 
-  else if (type == "square") {
-      Point3 p0 = ps.retrieve<Point3>("p0", Point3(-1, 0, -1));
-      Point3 p1 = ps.retrieve<Point3>("p1", Point3( 1, 0, -1));
-      Point3 p2 = ps.retrieve<Point3>("p2", Point3( 1, 0,  1));
-      Point3 p3 = ps.retrieve<Point3>("p3", Point3(-1, 0,  1));
-      
-      m_render_options->elements.push_back(
-          std::make_shared<Square>(p0, p1, p2, p3, m_render_options->current_material)
-      );
-  }
-  else if (type == "cube") {
+
+    m_render_options->elements.push_back(std::make_shared<Star>(
+        center, r_outer, r_inner, m_render_options->current_material));
+  } else if (type == "square") {
+    Point3 p0 = ps.retrieve<Point3>("p0", Point3(-1, 0, -1));
+    Point3 p1 = ps.retrieve<Point3>("p1", Point3(1, 0, -1));
+    Point3 p2 = ps.retrieve<Point3>("p2", Point3(1, 0, 1));
+    Point3 p3 = ps.retrieve<Point3>("p3", Point3(-1, 0, 1));
+
+    m_render_options->elements.push_back(std::make_shared<Square>(
+        p0, p1, p2, p3, m_render_options->current_material));
+  } else if (type == "cube") {
     Point3 center = ps.retrieve<Point3>("center", Point3(0, 0, 0));
-    double size   = ps.retrieve<double>("size", 1.0);
-    
-    m_render_options->elements.push_back(
-        std::make_shared<Cube>(center, size, m_render_options->current_material)
-    );
-}
-  else
+    double size = ps.retrieve<double>("size", 1.0);
+
+    m_render_options->elements.push_back(std::make_shared<Cube>(
+        center, size, m_render_options->current_material));
+  } else
     ERROR("API::object(): Missing \"type\" specification for the object.");
 }
 
@@ -432,20 +417,28 @@ void API::make_named_material(const ParamSet &ps) {
           "material.");
   }
 
-  if(type == "flat"){
+  if (type == "flat") {
 
     auto color_type = ps.retrieve<std::string>("color_type", "rgb");
-    auto color = RGBColor(ps.retrieve<RGBColor>("color", RGBColor()), color_type);
-    m_render_options->material_memory[material_id] =(std::shared_ptr<Material>(new FlatMaterial(color, mirror)));
-  }
-  else if(type == "blinn"){
+    auto color =
+        RGBColor(ps.retrieve<RGBColor>("color", RGBColor()), color_type);
+    m_render_options->material_memory[material_id] =
+        (std::shared_ptr<Material>(new FlatMaterial(color)));
+  } else if (type == "blinn") {
     auto color_type = ps.retrieve<std::string>("color_type", "spectre");
-    auto ambient = RGBColor(ps.retrieve<Vec3>("ambient", {0, 0, 0}), color_type);
-    auto diffuse = RGBColor(ps.retrieve<Vec3>("diffuse", {0, 0, 0}), color_type);
-    auto specular = RGBColor(ps.retrieve<Vec3>("specular", {0, 0, 0}), color_type);
+    auto ambient =
+        RGBColor(ps.retrieve<Vec3>("ambient", {0, 0, 0}), color_type);
+    auto diffuse =
+        RGBColor(ps.retrieve<Vec3>("diffuse", {0, 0, 0}), color_type);
+    auto specular =
+        RGBColor(ps.retrieve<Vec3>("specular", {0, 0, 0}), color_type);
     auto glossiness = ps.retrieve<double>("glossiness", 0.0f);
+    std::cout << "Criando Material Blinn - Difuso: " << diffuse.red << " "
+              << diffuse.green << " " << diffuse.blue << "\n";
 
-    m_render_options->material_memory[material_id] = std::make_shared<BlinnPhongMaterial>(diffuse, specular, ambient, glossiness, mirror);
+    m_render_options->material_memory[material_id] =
+        std::make_shared<BlinnPhongMaterial>(diffuse, specular, ambient,
+                                             glossiness);
   }
   else if (type == "toon"){
       auto color_map = ps.retrieve<std::vector<double>>("color_map", {});
@@ -476,17 +469,18 @@ void API::render() {
   // -------------------------------------------------------------
   // The Film object holds the memory for the image.
 
-
-  // m_render_options->integrator = make_integrator(m_render_options->setup_params["integrator"]);
+  // m_render_options->integrator =
+  // make_integrator(m_render_options->setup_params["integrator"]);
 
   // auto primitive_list = std::make_shared<PrimitiveList>();
   // for(auto& obj : m_render_options->elements){
   //   primitive_list->add(obj);
   // }
 
-  // m_render_options->scene = std::make_unique<Scene>(primitive_list, m_render_options->background, m_render_options->light_sources);
-  
-  if(m_render_options->integrator && m_render_options->scene){
+  // m_render_options->scene = std::make_unique<Scene>(primitive_list,
+  // m_render_options->background, m_render_options->light_sources);
+
+  if (m_render_options->integrator && m_render_options->scene) {
     m_render_options->integrator->render(*m_render_options->scene);
   }
 }
