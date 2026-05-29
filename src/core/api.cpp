@@ -8,6 +8,10 @@
 #include "common.hpp"
 #include "spot_light.hpp"
 #include "ssmath/vec3.hpp"
+#include "scenes.hpp"
+#include "toonIntegrator.hpp"
+#include "toon_material.hpp"
+
 
 namespace rt {
 
@@ -105,20 +109,14 @@ void API::light_source(const ParamSet &ps) {
   } else if (type == "directional") {
     auto from = ps.retrieve<Point3>("from", {0, 0, 0});
     auto to = ps.retrieve<Vec3>("to", {0, 0, 0});
+    auto world_radius = ps.retrieve<double>("world_radius", 0);
 
-    auto direction = unit_vec(to - from);
-    m_render_options->light_sources.push_back(
-        std::make_shared<DirectionalLight>(direction, I, scale));
-  } else if (type == "spot") {
-    auto from = ps.retrieve<Point3>("from", {0, 0, 0});
-    auto to = ps.retrieve<Vec3>("to", {0, 0, 0});
-
-    auto direction = unit_vec(to - from);
-
-    auto cutoff = ps.retrieve<double>("cutoff");
-    auto falloff = ps.retrieve<double>("falloff");
-    auto world_radius = ps.retrieve<int>("world_radius");
-    auto attenuation = ps.retrieve<Vec3>("attenuation", {1, 0, 0});
+    auto direction = to - from;
+    m_render_options->light_sources.push_back( std::make_shared<DirectionalLight>(direction, I, scale, world_radius));
+  }
+  else if (type == "ambient"){
+    m_render_options->light_sources.push_back(std::make_shared<AmbientLight>(I, scale));
+  }
 
     m_render_options->light_sources.push_back(
         std::make_shared<SpotLight>(from, direction, cutoff, falloff, world_radius, I, scale, attenuation)
@@ -185,10 +183,12 @@ std::unique_ptr<Film> API::make_film(const ParamSet &ps) {
 std::unique_ptr<Integrator> API::make_integrator(const ParamSet &ps) {
   std::unique_ptr<Integrator> inter{nullptr};
   auto integrator_type = ps.retrieve<string>("type", "flat");
+  auto depth = ps.retrieve<int>("depth", 0);
+
   if (integrator_type == "flat") {
-    inter = std::make_unique<RayCastIntegrator>(m_render_options->camera);
+    inter = std::make_unique<RayCastIntegrator>(m_render_options->camera, depth);
   } else if (integrator_type == "normal_map") {
-    inter = std::make_unique<NormalMapIntegrator>(m_render_options->camera);
+    inter = std::make_unique<NormalMapIntegrator>(m_render_options->camera, depth);
   } else if (integrator_type == "depth_map") {
     auto near = ps.retrieve<RGBColor>("near_color", RGBColor(0, 0, 0));
     auto far = ps.retrieve<RGBColor>("far_color", RGBColor(255, 255, 255));
@@ -404,6 +404,9 @@ void API::look_at(const ParamSet &ps) {
 void API::make_named_material(const ParamSet &ps) {
   check_in_world_block_state("API::make_named_material");
   auto type = ps.retrieve<string>("type", "unknown");
+  auto color_type = ps.retrieve<std::string>("color_type", "spectre");
+
+  auto mirror = RGBColor(ps.retrieve<Vec3>("mirror", Vec3()), color_type);
   if (type == "unknown") {
     ERROR("API::make_named_material(): Missing \"type\" specification for the "
           "material.");
@@ -437,6 +440,17 @@ void API::make_named_material(const ParamSet &ps) {
         std::make_shared<BlinnPhongMaterial>(diffuse, specular, ambient,
                                              glossiness);
   }
+  else if (type == "toon"){
+      auto color_map = ps.retrieve<std::vector<double>>("color_map", {});
+      auto color_type = ps.retrieve<std::string>("color_type", "rgb");
+      std::vector<RGBColor> colors;
+
+      for(size_t i{0}; i + 2 < color_map.size(); i += 3){
+        colors.push_back(RGBColor(color_map[i], color_map[i + 1], color_map[i + 2], color_type));
+      }
+
+      m_render_options->material_memory[material_id] = std::make_shared<ToonMaterial>(colors, mirror);
+    }
 }
 
 void API::named_material(const ParamSet &ps) {
