@@ -27,7 +27,7 @@ public:
         cutoff_angle(cutoff), falloff_angle(falloff), world_radius(world_radius) {
     flag = light_flag_e::spot;
   };
-  RGBColor sample_Li(const Surfel &hit, Vec3 *wi) override;
+  RGBColor sample_Li(const Surfel &hit, Vec3 *wi, VisibilityTester* vis) override;
 };
 } // namespace rt
 

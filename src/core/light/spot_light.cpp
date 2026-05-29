@@ -2,13 +2,17 @@
 #include "common.hpp"
 #include "ssmath/vec3.hpp"
 #include "surfel.hpp"
+#include "visibilityTester.hpp"
 #include <cmath>
 
 namespace rt {
 
-    RGBColor SpotLight::sample_Li(const Surfel &hit, Vec3 *wi){
+    RGBColor SpotLight::sample_Li(const Surfel &hit, Vec3 *wi, VisibilityTester* vis){
+    
         Vec3 dir = spot_pos - hit.p;
-        
+        Surfel lpos; lpos.p = spot_pos;
+        *vis = VisibilityTester(hit, lpos);
+
         double dist = dir.length();
 
         att = 1.0f / (attenuation[0] + dist * attenuation[1] + dist * dist * attenuation[2]);
@@ -19,10 +23,10 @@ namespace rt {
 
         double spot = 1.0;
 
-        if(angle > cutoff_angle){
+        if(angle >= cutoff_angle){
             return RGBColor();
         }
-        else if(angle > falloff_angle){
+        else if(angle >= falloff_angle){
             spot = (cutoff_angle - angle)/(cutoff_angle - falloff_angle);
         }
         
