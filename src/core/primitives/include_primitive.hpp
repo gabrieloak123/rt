@@ -8,4 +8,5 @@
 #include "triangle.hpp"
 #include "plane.hpp"
 
+
 #endif //< INCLUDE_ALL_PRIMITIVES

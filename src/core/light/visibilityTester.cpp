@@ -9,18 +9,29 @@ namespace rt {
         this->p0 = sf1;
         this->p1 = sf2;
         this->direction = sf2.p - sf1.p;
+        this->is_infinity = false;
     }
 
     VisibilityTester::VisibilityTester( const Surfel& sf, const Vec3& dir){
         this->p0 = sf;
         this->direction = unit_vec(dir);
         this->p1.p = sf.p + direction;
+        this->is_infinity = true;
     }
 
     bool VisibilityTester::unoccluded( const Scene& scene ) {
-        Vec3 path = p1.p - p0.p;
-        double dist = path.length();
-        Vec3 dir = unit_vec(path);
+        
+        Vec3 dir;
+        double dist;
+        if(is_infinity){
+            dir = direction;
+            dist = std::numeric_limits<double>::infinity();
+        }
+        else{
+            Vec3 path = p1.p - p0.p;
+            dist = path.length();
+            dir = path/dist;
+        }
 
         Ray shadowRay(p0.p + p0.n * 0.0001f, dir);
         shadowRay.setTMax(dist - 0.0001f); 

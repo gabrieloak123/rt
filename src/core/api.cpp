@@ -369,6 +369,7 @@ void API::material(const ParamSet &ps) {
 void API::object(const ParamSet &ps) {
   check_in_world_block_state("API::object");
   auto type = ps.retrieve<std::string>("type", "unknown");
+  bool flip = ps.retrieve<bool>("flip", false);
   if (type == "unknown") {
     ERROR("API::object(): Missing \"type\" specification for the object.");
   }
@@ -378,22 +379,21 @@ void API::object(const ParamSet &ps) {
       ERROR("API::object(): Missing \"radius\" specification for the sphere.");
     }
     auto center = ps.retrieve<Point3>("center", {0, 0, 0});
-    m_render_options->elements.push_back(std::make_shared<Sphere>(
-        center, radius, m_render_options->current_material));
-  // } else if (type == "triangle") {
-  //   Point3 p0 = ps.retrieve<Point3>("p0", Point3(-1, 0, 0));
-  //   Point3 p1 = ps.retrieve<Point3>("p1", Point3(1, 0, 0));
-  //   Point3 p2 = ps.retrieve<Point3>("p2", Point3(0, 1, 0));
-
-  //   m_render_options->elements.push_back(std::make_shared<Triangle>(
-  //       p0, p1, p2, m_render_options->current_material));
+    auto sphere = std::make_shared<Sphere>(flip, center, radius);
+    m_render_options->elements.push_back(std::make_shared<GeometricPrimitive>(sphere, m_render_options->current_material));
+  } else if (type == "triangle") {
+    Point3 p0 = ps.retrieve<Point3>("p0", Point3(-1, 0, 0));
+    Point3 p1 = ps.retrieve<Point3>("p1", Point3(1, 0, 0));
+    Point3 p2 = ps.retrieve<Point3>("p2", Point3(0, 1, 0));
+    auto triangle = std::make_shared<Triangle>(
+       flip, p0, p1, p2);
+    m_render_options->elements.push_back(std::make_shared<GeometricPrimitive>(triangle, m_render_options->current_material));
   } else if (type == "plane") {
     Point3 p = ps.retrieve<Point3>("point", Point3(0, 0, 0));
     Vec3 n = ps.retrieve<Vec3>("normal", Vec3(0, 1, 0));
 
-    m_render_options->elements.push_back(
-        std::make_shared<Plane>(p, n, m_render_options->current_material));
-
+    auto plane = std::make_shared<Plane>(flip, p, n);
+    m_render_options->elements.push_back(std::make_shared<GeometricPrimitive>(plane, m_render_options->current_material));
   } else
     ERROR("API::object(): Missing \"type\" specification for the object.");
 }
