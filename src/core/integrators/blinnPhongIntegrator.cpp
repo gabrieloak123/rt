@@ -2,6 +2,7 @@
 #include "blinn_phong_material.hpp"
 #include "common.hpp"
 #include "light.hpp"
+#include "scenes.hpp"
 #include "visibilityTester.hpp"
 #include <algorithm>
 #include <memory>
@@ -73,7 +74,7 @@ namespace rt {
             auto rd = n * 2 - v;
             rd.mk_unit_vec();
 
-            Ray reflected_ray = Ray(isect.p + rd * 0.001f, rd);
+            Ray reflected_ray = Ray(isect.p + rd * epsilon, rd);
             auto tempL = this->Li(reflected_ray, scene, depth + 1);
 
             if(tempL.has_value()){
