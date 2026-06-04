@@ -380,13 +380,13 @@ void API::object(const ParamSet &ps) {
     auto center = ps.retrieve<Point3>("center", {0, 0, 0});
     m_render_options->elements.push_back(std::make_shared<Sphere>(
         center, radius, m_render_options->current_material));
-  } else if (type == "triangle") {
-    Point3 p0 = ps.retrieve<Point3>("p0", Point3(-1, 0, 0));
-    Point3 p1 = ps.retrieve<Point3>("p1", Point3(1, 0, 0));
-    Point3 p2 = ps.retrieve<Point3>("p2", Point3(0, 1, 0));
+  // } else if (type == "triangle") {
+  //   Point3 p0 = ps.retrieve<Point3>("p0", Point3(-1, 0, 0));
+  //   Point3 p1 = ps.retrieve<Point3>("p1", Point3(1, 0, 0));
+  //   Point3 p2 = ps.retrieve<Point3>("p2", Point3(0, 1, 0));
 
-    m_render_options->elements.push_back(std::make_shared<Triangle>(
-        p0, p1, p2, m_render_options->current_material));
+  //   m_render_options->elements.push_back(std::make_shared<Triangle>(
+  //       p0, p1, p2, m_render_options->current_material));
   } else if (type == "plane") {
     Point3 p = ps.retrieve<Point3>("point", Point3(0, 0, 0));
     Vec3 n = ps.retrieve<Vec3>("normal", Vec3(0, 1, 0));
