@@ -6,8 +6,8 @@
 
 namespace rt {
 
-    inline float ffmin(float a, float b) {return a < b ? a : b;}
-    inline float ffmax(float a, float b) {return a > b ? a : b;}
+    inline float ffmin(const float& a, const float& b) {return a < b ? a : b;}
+    inline float ffmax(const float& a, const float& b) {return a > b ? a : b;}
 
     class Bounds3f{
         private:

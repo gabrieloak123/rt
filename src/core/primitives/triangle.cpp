@@ -267,7 +267,7 @@ bool load_mesh_data(const std::string& filename,
                     bool rvo,
                     bool cn,
                     bool fn,
-                    std::shared_ptr<TriangleMesh> md) {
+                    const std::shared_ptr<TriangleMesh>& md) {
   // Default load parameters
   const char* basepath = nullptr;
   bool triangulate = true;
@@ -341,7 +341,7 @@ void extract_obj_data(const tinyobj::attrib_t& attrib,
                       bool reverse_order,
                       bool cn,
                       bool fn,
-                      /* OUT */ std::shared_ptr<TriangleMesh> md) {
+                      /* OUT */ const std::shared_ptr<TriangleMesh>& md) {
 
   std::cout << "-- SUMMARY of the OBJ file --\n";
   std::cout << "# of vertices  : " << (attrib.vertices.size() / 3) << '\n';
@@ -486,7 +486,7 @@ void extract_obj_data(const tinyobj::attrib_t& attrib,
 }
 
 /// This function creates the internal data structure, required by the RT3.
-std::vector<std::shared_ptr<Shape>> create_triangle_mesh(std::shared_ptr<TriangleMesh> mesh, bool backface_cull, bool flip) {
+std::vector<std::shared_ptr<Shape>> create_triangle_mesh(const std::shared_ptr<TriangleMesh>& mesh, const bool& backface_cull, const bool& flip) {
   // List of shapes (triangles) we need to return to the client.
   std::vector<std::shared_ptr<Shape>> tris;
   // Create the triangles, which are just references to the mesh database.

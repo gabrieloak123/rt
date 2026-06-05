@@ -10,7 +10,7 @@
 
 namespace rt {
 
-    std::optional<RGBColor> BlinnPhongIntegrator::Li(const Ray& ray, const rt::Scene& scene, int depth) const {
+    std::optional<RGBColor> BlinnPhongIntegrator::Li(const Ray& ray, const rt::Scene& scene, const int& depth) const {
         RGBColor L(0, 0, 0);
         Surfel isect;
         if(!scene.intersect(ray, &isect)){
@@ -70,11 +70,11 @@ namespace rt {
         }
 
     
-        if(depth < max_depth){
-            auto rd = n * 2 - v;
+        if(depth < max_depth && (km.red > 0.01 || km.green > 0.01 || km.blue > 0.01)){
+            auto rd = n * 2 * dot(n, v) - v;
             rd.mk_unit_vec();
 
-            Ray reflected_ray = Ray(isect.p + rd * epsilon, rd);
+            Ray reflected_ray = Ray(isect.p + rd * 0.0001f, rd);
             auto tempL = this->Li(reflected_ray, scene, depth + 1);
 
             if(tempL.has_value()){

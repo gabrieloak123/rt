@@ -8,7 +8,7 @@ const std::shared_ptr<Material> AggregatePrimitive::get_material() const {
 	return nullptr;
 }
 
-void PrimitiveList::add(std::shared_ptr<Primitive> object) {
+void PrimitiveList::add(const std::shared_ptr<Primitive>& object) {
     primitives.push_back(object);
 }
 

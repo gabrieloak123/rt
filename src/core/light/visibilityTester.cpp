@@ -25,7 +25,7 @@ namespace rt {
         double dist;
         if(is_infinity){
             dir = direction;
-            dist = std::numeric_limits<double>::infinity();
+            dist = INFINITY;
         }
         else{
             Vec3 path = p1.p - p0.p;

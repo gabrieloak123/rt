@@ -57,7 +57,7 @@ public:
   PrimitiveList() = default; // Construtor padrão
   PrimitiveList(std::vector<std::shared_ptr<Primitive>> prim) : primitives(prim) {}
 
-  void add(std::shared_ptr<Primitive> primitive);
+  void add(const std::shared_ptr<Primitive>& primitive);
   bool intersect(const Ray &ray, Surfel *isect) const override;
   bool intersect_p(const Ray &ray) const override;
   Bounds3f world_bounds() const override {};
@@ -87,7 +87,7 @@ public:
 
   bool intersect(const Ray &r, Surfel *sf) const override;
   bool intersect_p(const Ray &r) const override;
-  void set_material(std::shared_ptr<Material> m) { material = m; };
+  void set_material(const std::shared_ptr<Material>& m) { material = m; };
   const std::shared_ptr<Material> get_material() const override { return material; }
   Bounds3f world_bounds() const override;
 };

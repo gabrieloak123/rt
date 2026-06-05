@@ -41,7 +41,7 @@ namespace rt {
             std::shared_ptr<TriangleMesh> mesh;
         public:
             
-            Triangle(bool flip, std::shared_ptr<TriangleMesh> mesh, int tri_id, bool bfc = true)
+            Triangle(bool flip, const std::shared_ptr<TriangleMesh>& mesh, int tri_id, bool bfc = true)
                 :Shape(flip), backface_cull{ bfc }, mesh{ mesh } {
      
                 v = &mesh->vertex_indices[3 * tri_id];
@@ -56,20 +56,20 @@ namespace rt {
     };
 
     std::vector<std::shared_ptr<Shape>> create_triangle_mesh_shape(bool flip_normals, const ParamSet& ps);
-    std::vector<std::shared_ptr<Shape>> create_triangle_mesh(std::shared_ptr<TriangleMesh>, bool, bool);
+    std::vector<std::shared_ptr<Shape>> create_triangle_mesh(const std::shared_ptr<TriangleMesh>&, const bool&, const bool&);
 
     bool load_mesh_data(const std::string& filename,
                     bool rvo,
                     bool cn,
                     bool fn,
-                    std::shared_ptr<TriangleMesh> md);
+                    const std::shared_ptr<TriangleMesh>& md);
 
     void extract_obj_data(const tinyobj::attrib_t& attrib,
                         const std::vector<tinyobj::shape_t>& shapes,
                         bool reverse_order,
                         bool cn,
                         bool fn,
-                        std::shared_ptr<TriangleMesh> md);
+                        const std::shared_ptr<TriangleMesh>& md);
 
 
     };

@@ -10,7 +10,7 @@
 #include "api.hpp"
 #include "parser.hpp"
 
-void print(vector<string> v) {
+void print(const vector<string>& v) {
   for (auto s : v) {
     cout << s << endl;
   }
@@ -568,7 +568,7 @@ void parse_attribute(const string &attr_name /* IN value */,
 /*!
  * This is the entry point where the parsing of the scene file begins.
  */
-void Parser::parse_scene(const string filename) {
+void Parser::parse_scene(const string& filename) {
   // [1] Load document.
   tinyxml2::XMLDocument doc;
   if (doc.LoadFile(filename.c_str()) != tinyxml2::XML_SUCCESS) {
