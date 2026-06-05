@@ -30,10 +30,11 @@ enum Corners_e {
 
 namespace rt {
 
-struct Pixel {
-	u_int64_t x;
-	u_int64_t y;
-};
+// struct Pixel {
+// 	u_int64_t x;
+// 	u_int64_t y;
+// };
+using Pixel = vec2<u_int64_t>;
 
 struct RunningOptions {
 	std::optional<array<Pixel,2>> crop_region;
