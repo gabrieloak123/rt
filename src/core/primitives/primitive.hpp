@@ -15,9 +15,9 @@ class Primitive;
 #endif //< SURFEL_HPP
 
 namespace rt {
-constexpr float epsilon = std::numeric_limits<float>::epsilon();
+constexpr float epsilon = 1e-4;
 class Primitive {
-
+  
 public:
   virtual ~Primitive() = default;
   virtual Bounds3f world_bounds() const = 0;
