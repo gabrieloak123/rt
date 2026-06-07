@@ -30,7 +30,7 @@ namespace rt {
         return false; 
     }
 
-    if(std::abs(det) < epsilon){
+    if(std::abs(det) < 1e-5){
       return false;
     }
     
@@ -43,7 +43,7 @@ namespace rt {
     Vec3 vcross = cross(v10, o);
     double V = invdet * dot(vcross, d); //< V = det(-d, O, v20) / det(v20, v10, d)
 
-    if(V < 0.0 || U + V > 1.0 + epsilon){ //< u >= 0 e v >= 0, e u + v <= 1
+    if(V < 0.0 || U + V > 1.0){ //< u >= 0 e v >= 0, e u + v <= 1
       return false;
     }
 
@@ -52,7 +52,7 @@ namespace rt {
       return false;
     }
 
-    if(t_hit) *t_hit = t;
+    *t_hit = t;
 
     if (sf) {
       sf->time = t;
@@ -63,9 +63,10 @@ namespace rt {
         Vec3 n0 = mesh->normals[n[0]];
         Vec3 n1 = mesh->normals[n[1]];
         Vec3 n2 = mesh->normals[n[2]];
-          
-        sf->n = n0 * (1.0 - U - V) + n1 * U + n2 * V;
-        sf->n.mk_unit_vec();
+        Vec3 n_norm = n0 * (1.0 - U - V) + n1 * U + n2 * V;
+        n_norm.mk_unit_vec();
+        sf->n = n_norm;
+
       }
       
       else {
@@ -124,7 +125,7 @@ namespace rt {
     Vec3 vcross = cross(v10, o);
     double V = invdet * dot(vcross, d); //< V = det(-d, O, v20) / det(v20, v10, d)
 
-    if(V < 0.0 || U + V > 1.0 + epsilon){ //< u >= 0 e v >= 0, e u + v <= 1
+    if(V < 0.0 || U + V > 1.0){ //< u >= 0 e v >= 0, e u + v <= 1
       return false;
     }
 
@@ -157,7 +158,7 @@ namespace rt {
 }
 
   std::vector<std::shared_ptr<Shape>> create_triangle_mesh_shape(bool flip_normals, const ParamSet& ps){
-  bool bkfc{ true };                // Controls whether the backface cull should be done or not.
+  bool bkfc{ false };                // Controls whether the backface cull should be done or not.
   bool reverse_vertex_order{ false };  // If this is true, we store vertices in
                                        // reverse order inside the mesh.
   bool compute_normals{ false };       // Indicate whether we need to calculate the
@@ -171,8 +172,8 @@ namespace rt {
   // Retrieve filename.
   std::string filename = ps.retrieve<std::string>("filename", "");  // Retrieving data associated with 'filename' attrib.
   std::string bkf_on_str = ps.retrieve<std::string>("backface_cull");
-  if (bkf_on_str == "off" or bkf_on_str == "false") {
-    bkfc = false;
+  if (bkf_on_str == "on" or bkf_on_str == "true") {
+    bkfc = true;
   }
   // Retrieve Reverse vertex order ON/OFF
   std::string rvo_str = ps.retrieve<std::string>("reverse_vertex_order");
@@ -236,6 +237,19 @@ namespace rt {
       vertex_indices = indices;
       normals_indices = indices;
       uv_indices = indices;
+    }
+
+    if(reverse_vertex_order){
+      for(int i{0}; i < vertex_indices.size(); i += 3){
+          std::swap(vertex_indices[i + 1], vertex_indices[i + 2]);
+          if (!normals_indices.empty()) {
+                std::swap(normals_indices[i + 1], normals_indices[i + 2]);
+            }
+            
+            if (!uv_indices.empty()) {
+                std::swap(uv_indices[i + 1], uv_indices[i + 2]);
+            }
+      }
     }
     
     mesh->n_triangles = n_triangles;
