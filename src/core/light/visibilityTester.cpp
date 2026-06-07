@@ -33,8 +33,9 @@ namespace rt {
             dir = path/dist;
         }
 
-        Ray shadowRay(p0.p + dir * 0.0001f, dir);
-        shadowRay.setTMax(dist - 0.0001f); 
+
+        Ray shadowRay(p0.p + dir * 0.001f, dir);
+        shadowRay.setTMax(dist - 0.001f); 
 
         return !scene.intersect_p(shadowRay);
     }
