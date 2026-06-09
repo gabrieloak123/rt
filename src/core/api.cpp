@@ -213,7 +213,14 @@ std::unique_ptr<Integrator> API::make_integrator(const ParamSet &ps) {
     auto depth = ps.retrieve<int>("depth", 1);
     inter =
         std::make_unique<BlinnPhongIntegrator>(m_render_options->camera, depth);
-  } else {
+  } else if (integrator_type == "toon"){
+    auto depth = ps.retrieve<int>("depth", 1);
+    auto n_intervals = ps.retrieve<int>("n_intervals", 0);
+    auto color_mapping = ps.retrieve<std::vector<double>>("mapping_interval", {});
+    inter = 
+        std::make_unique<ToonIntegrator>(m_render_options->camera,color_mapping, n_intervals, depth);
+  }
+  else {
     WARNING(string{"Integrator \""} + integrator_type + string{"\" unknown."});
   }
   return inter;
@@ -357,13 +364,17 @@ void API::material(const ParamSet &ps) {
     auto color_map = ps.retrieve<std::vector<double>>("color_map", {});
       auto color_type = ps.retrieve<std::string>("color_type", "rgb");
       std::vector<RGBColor> colors;
+      auto shadowColor = 
+        RGBColor(ps.retrieve<Vec3>("shadow_color", {0, 0, 0}), color_type);
+      auto ambient =
+        RGBColor(ps.retrieve<Vec3>("ambient", {0, 0, 0}), "spectre");
       RGBColor mirror(ps.retrieve<Vec3>("mirror", {0, 0, 0}), color_type);
 
       for(size_t i{0}; i + 2 < color_map.size(); i += 3){
         colors.push_back(RGBColor(color_map[i], color_map[i + 1], color_map[i + 2], color_type));
       }
 
-      m_render_options->current_material = std::make_shared<ToonMaterial>(colors, mirror);
+      m_render_options->current_material = std::make_shared<ToonMaterial>(shadowColor, ambient, colors, mirror);
   }
 }
 
@@ -451,13 +462,16 @@ void API::make_named_material(const ParamSet &ps) {
   else if (type == "toon"){
       auto color_map = ps.retrieve<std::vector<double>>("color_map", {});
       auto color_type = ps.retrieve<std::string>("color_type", "rgb");
+      auto ambient =
+        RGBColor(ps.retrieve<Vec3>("ambient", {0, 0, 0}), "spectre");
+      auto shadowColor = 
+        RGBColor(ps.retrieve<Vec3>("shadow_color", {0, 0, 0}), color_type);
       std::vector<RGBColor> colors;
-
       for(size_t i{0}; i + 2 < color_map.size(); i += 3){
         colors.push_back(RGBColor(color_map[i], color_map[i + 1], color_map[i + 2], color_type));
       }
 
-      m_render_options->material_memory[material_id] = std::make_shared<ToonMaterial>(colors, mirror);
+      m_render_options->material_memory[material_id] = std::make_shared<ToonMaterial>(shadowColor, ambient, colors, mirror);
     }
 }
 

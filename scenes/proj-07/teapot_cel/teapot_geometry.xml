@@ -6,18 +6,19 @@
         <background type="4_colors" color_type="spectre" bl="0.6 0.8 1" tl="0.04 0.04 0.04" tr="0.04 0.04 0.04" br="0.6 0.8 1" />
 
         <!-- Lights -->
-        <light_source type="directional" I="0.9 0.6 0.5" scale="1 1 1" from="-5 -5 10" to="0 0 0" />
-        <light_source type="directional" I="0.9 0.9 0.9" scale="1 1 1" from=" 5 -5 10" to="0 0 0" />
-        <light_source type="ambient" I="0.9 0.9 0.9" scale="1 1 1" />
+        <light_source type="ambient"     I="0.1 0.1 0.1" scale="0.5 0.5 0.5"/>
+        <light_source type="directional" I="0.9 0.9 0.9" scale="1 1 1" from="-5 -5 10" to="0 0 0" />
+        <!-- <light_source type="directional" I="0.9 0.9 0.9" scale="1 1 1" from=" 5 -5 10" to="0 0 0" /> -->
+
         <!-- Material Library -->
-        <include filename="scenes/proj-07/teapot_scene/teapot_materials.xml" />
+        <include filename="scenes/proj-07/teapot_cel/teapot_materials.xml" />
 
         <!-- Objects -->
         <!-- <named_material name="gold"/> -->
-        <named_material name="jade"/>
-        <object type="trianglemesh" filename="scenes/proj-07/teapot_scene/teapot.obj" backface_cull="true"/>
+        <named_material name="green"/>
+        <object type="trianglemesh" filename="scenes/proj-07/teapot_cel/teapot.obj" backface_cull="false" />
 
-        <named_material name="indigo"/>
+        <named_material name="grey"/>
         <object type="trianglemesh"
                 ntriangles ="2"
                 vertices="-30 30.5 -1  30 30.5 -1  30 -30.5 -1  -30 -30.5 -1"

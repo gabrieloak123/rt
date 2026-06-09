@@ -325,6 +325,7 @@ std::unordered_map<string, vector<string>> tag_catalog{
         "glossiness",
         "color_map",
         "mirror",
+        "shadow_color",
       }
      },
      {"object",
@@ -380,6 +381,7 @@ std::unordered_map<string, vector<string>> tag_catalog{
         "glossiness",
         "color_map",
         "mirror",
+        "shadow_color",
       }
     },
     {
@@ -468,6 +470,7 @@ std::unordered_map<string, ConverterFunction> converters{
     // Material attributes
     {"color_map", convert<double>},
     {"mirror", convert<Vec3>},
+    {"shadow_color", convert<Vec3>},
     // Object attributes
     {"radius", convert<double>},
     {"center", convert<Point3>},

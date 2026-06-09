@@ -17,7 +17,7 @@ namespace rt {
             return std::nullopt;
         }
         if (dot(ray.getDirection(), isect.n) > 0) {
-           return std::nullopt;
+           isect.n = - isect.n;
         }
 
 
@@ -25,14 +25,15 @@ namespace rt {
         if(!fm) return RGBColor{0, 0, 0};
 
         vector<RGBColor> gm = fm->gm();
-        
+        RGBColor ka = fm->ka();
+        RGBColor gs = fm->gs();
         auto n = isect.n;
         n.mk_unit_vec();
         auto v = -ray.getDirection();
         v.mk_unit_vec();
 
         if(dot(n, v) <= 0.2){
-            return fm->kd();
+            return RGBColor();
         }
         
         for(auto& light : scene.lights){
@@ -41,17 +42,16 @@ namespace rt {
             auto Li = light->sample_Li(isect, &wi, &vis);
 
             if(light->flag == light_flag_e::ambient){
-                L = L + gm[0] * Li;
+                L = L + ka * Li;
                 continue;
             }
 
             if(!vis.unoccluded(scene)){
-                L = L + gm[0] * Li;
+                L = L + gs * Li;
                 continue; 
             }
             
-            auto n = isect.n;
-            n.mk_unit_vec();
+         
             auto l = wi;
             l.mk_unit_vec();
 
