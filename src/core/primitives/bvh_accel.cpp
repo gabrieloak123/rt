@@ -1,4 +1,5 @@
 #include "bvh_accel.hpp"
+#include "api.hpp"
 #include <algorithm>
 #include <memory>
 
@@ -33,7 +34,7 @@ BVHAccel::create_bvh(std::vector<std::shared_ptr<Primitive>> &prims) {
   node->bounds = node_box;
 
   // caso base
-  if (prims.size() <= 2) {
+  if (prims.size() <= max_prims_per_node) {
     node->primitives = prims;
     return node;
   }
@@ -82,6 +83,12 @@ BVHAccel::create_bvh(std::vector<std::shared_ptr<Primitive>> &prims) {
   });
 
   size_t mid = prims.size() / 2;
+
+  // Avoid degenerate splits: if all centroids are identical or split is empty
+  if (mid == 0 || mid == prims.size()) {
+    node->primitives = prims;
+    return node;
+  }
 
   std::vector<std::shared_ptr<Primitive>> leftPrims(prims.begin(),
                                                     prims.begin() + mid);
@@ -210,6 +217,28 @@ bool BVHAccel::intersect_p(const Ray &ray) const {
     return false;
 
   return intersect_p_node(root.get(), ray);
+}
+
+namespace {
+void print_bvh_node(const rt::BVHNode *node, int depth = 0) {
+    if (!node) return;
+    std::string indent(depth * 2, ' ');
+    const auto& b = node->bounds;
+    std::cout << indent << (node->is_leaf() ? "Leaf Node" : "Interior Node") << ":\n";
+    std::cout << indent << "  pmin: " << b.min() << " | pmax: " << b.max() << "\n";
+    std::cout << indent << "  centroid: " << b.centroid() << "\n";
+    if (node->is_leaf()) {
+        std::cout << indent << "  Primitives: " << node->primitives.size() << std::endl;
+    }
+    if (!node->is_leaf()) {
+        print_bvh_node(node->left.get(), depth + 1);
+        print_bvh_node(node->right.get(), depth + 1);
+    }
+}
+}
+
+void BVHAccel::print() {
+    print_bvh_node(root.get());
 }
 
 bool BVHAccel::box(Bounds3f &box) const {

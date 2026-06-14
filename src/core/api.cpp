@@ -7,6 +7,7 @@
 #include "api.hpp"
 #include "bvh_accel.hpp"
 #include "common.hpp"
+#include "sphere.hpp"
 #include "spot_light.hpp"
 #include "ssmath/vec3.hpp"
 #include "scenes.hpp"
@@ -255,11 +256,13 @@ void API::world_end(const ParamSet &ps) {
   switch (m_render_options->aggregator) {
 	  case LIST:
 		scene = std::make_unique<Scene>(primitive_list, m_render_options->background, m_render_options->light_sources);
-		  break;
+		break;
 	  case BVH:
-		auto bvh = std::make_shared<BVHAccel>(primitive_list->get_primitives());
-   		scene = std::make_unique<Scene>(bvh, m_render_options->background, m_render_options->light_sources);
-		  break;
+    	auto prims = ps.retrieve<int>("max_prims_per_node", 4);
+		auto bvh = std::make_shared<BVHAccel>(primitive_list->get_primitives(), prims);
+		bvh->print();
+		scene = std::make_unique<Scene>(bvh, m_render_options->background, m_render_options->light_sources);
+		break;
   }
 
   std::unique_ptr<Film> film =

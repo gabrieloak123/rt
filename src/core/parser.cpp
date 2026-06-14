@@ -355,6 +355,7 @@ std::unordered_map<string, vector<string>> tag_catalog{
       "aggregator", 
       {
         "type",
+		"max_prims_per_node",
       }
     },
     {
@@ -509,6 +510,7 @@ std::unordered_map<string, ConverterFunction> converters{
     {"cutoff", convert<double>},
     {"falloff", convert<double>},
     {"world_radius", convert<double>},
+    {"max_prims_per_node", convert<int>},
 };
 
 /*!

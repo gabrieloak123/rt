@@ -3,6 +3,7 @@
 
 #include "fbounds.hpp"
 #include "primitive.hpp"
+#include <algorithm>
 
 namespace rt {
 
@@ -20,6 +21,7 @@ struct BVHNode {
 class BVHAccel : public AggregatePrimitive {
 private:
   std::unique_ptr<BVHNode> root = nullptr;
+  int max_prims_per_node;
 
   std::unique_ptr<BVHNode> create_bvh(std::vector<std::shared_ptr<Primitive>> &prims);
 
@@ -29,8 +31,9 @@ private:
 
 
 public:
-  BVHAccel(const std::vector<std::shared_ptr<Primitive>> &prims) {
+  BVHAccel(const std::vector<std::shared_ptr<Primitive>> &prims, int n_prims) {
     auto dummy = prims;
+	max_prims_per_node = n_prims;
     root = create_bvh(dummy);
   }
 
@@ -39,6 +42,8 @@ public:
   bool intersect_p(const Ray &ray) const;
 
   bool box(Bounds3f &box) const;
+
+  void print();
 };
 
 } // namespace rt

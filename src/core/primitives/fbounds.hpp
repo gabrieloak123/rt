@@ -80,16 +80,13 @@ public:
   }
 
   bool intersect_p(const Ray &ray, float &tmin, float &tmax) const {
-    for (int a{0}; a < 3; ++a) {
-      float t0 =
-          ffmin((pmin[a] - ray.getOrigin()[a]) / ray.getDirection()[a],
-                (pmax[a] - ray.getDirection()[a] / ray.getDirection()[a]));
-      float t1 =
-          ffmax((pmin[a] - ray.getOrigin()[a]) / ray.getDirection()[a],
-                (pmax[a] - ray.getDirection()[a] / ray.getDirection()[a]));
+    for (int a = 0; a < 3; ++a) {
+      float invD = 1.0f / ray.getDirection()[a];
+      float t0 = (pmin[a] - ray.getOrigin()[a]) * invD;
+      float t1 = (pmax[a] - ray.getOrigin()[a]) * invD;
+      if (invD < 0.0f) std::swap(t0, t1);
       tmin = ffmax(t0, tmin);
       tmax = ffmin(t1, tmax);
-
       if (tmax <= tmin)
         return false;
     }
