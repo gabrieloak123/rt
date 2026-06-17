@@ -19,7 +19,7 @@ namespace rt {
             Transform translate(const Vec3& delta);
             Transform rotate(const double& angle, const Vec3& delta);
             Transform scale(const Vec3& scales);
-            Transform lookAt(const Vec3& look_from, const Vec3& look_at, const Vec3& vup);
+            Transform lookAt(const Vec3& look_from, const Vec3& vpn, const Vec3& vup);
 
             Mat4 getTMat()    const {return this->t_matrix;};
             Mat4 getTMatInv() const {return this->t_matrix_inv;};

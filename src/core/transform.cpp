@@ -55,8 +55,27 @@ namespace rt{
         return Transform(m, minv);
     }
 
-    Transform Transform::lookAt(const Vec3& look_from, const Vec3& look_at, const Vec3& vup){
+    Transform Transform::lookAt(const Vec3& look_from, const Vec3& vpn, const Vec3& vup){
 
+        Vec3 w{vpn}; //< Create the W axis aligned with vpn.
+        w.mk_unit_vec();
+
+        Vec3 u = -cross(vup, w); //< Create the U axis perpendicular to the vup and W.
+        u.mk_unit_vec();
+
+        Vec3 v = cross(w, u); //< Create the V axis perpendicular to W and U .
+        v.mk_unit_vec();
+
+        Mat4 m_camera_to_world( //< Creates the transformation matrix responsible for the linear
+                                //< transformation from camera to image.
+                u[0], v[0], w[0], look_from[0], 
+                u[1], v[1], w[1], look_from[1], 
+                u[2], v[2], w[2], look_from[2], 
+                0.0, 0.0, 0.0,            1.0);
+
+        Mat4 m_camera_to_world_inv = t_matrix.inverse();
+
+        return Transform(m_camera_to_world, m_camera_to_world_inv);
     }
 
 } //< namespace rt
