@@ -275,10 +275,10 @@ class mat3 {
               * @return mat3<T> Matriz transposta gerada a partir da matriz original.
               */
             inline mat3& transpose(){
-                std::swap(mat[1], mat[3]);
-                std::swap(mat[2], mat[6]);
-                std::swap(mat[5], mat[7]);
-                return *this;
+
+                return mat3<T>(mat[0], mat[3], mat[6],
+                               mat[1], mat[4], mat[7],
+                               mat[2], mat[5], mat[8]);
             }
 
             /**
