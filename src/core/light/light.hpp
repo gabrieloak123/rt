@@ -4,13 +4,6 @@
 #include "common.hpp"
 #include "surfel.hpp"
 
-#ifndef SCENES_HPP
-namespace rt{
-    class Light;
-}
-#include "scenes.hpp"
-#endif  //< SCENES_HPP
-
 #include "visibilityTester.hpp"
 
 

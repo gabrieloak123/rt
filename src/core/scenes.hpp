@@ -1,4 +1,3 @@
-
 #ifndef SCENES_HPP
 #define SCENES_HPP
 
@@ -30,8 +29,7 @@ class Scene {
     //=== Public interface
     public:
 		Scene();
-        Scene( const std::shared_ptr<AggregatePrimitive>& ag, const std::shared_ptr< Background >& bkg, const std::vector<std::shared_ptr<Light>>& lights)
-             : lights(lights), background{bkg}, aggregate{ag} {}
+        Scene( const std::shared_ptr<AggregatePrimitive>& ag, const std::shared_ptr< Background >& bkg, const std::vector<std::shared_ptr<Light>>& lights);
         /// Determines the intersection info; return true if there is an intersection.
         bool intersect( const Ray& r, Surfel *isect ) const;
         

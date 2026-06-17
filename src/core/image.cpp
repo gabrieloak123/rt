@@ -5,6 +5,12 @@
 
 namespace rt {
 
+inline double apply_gamma(double value, double gamma) {
+    if (value <= 0.0) return 0.0;
+    if (value >= 1.0) return 1.0;
+    return std::pow(value, 1.0 / gamma);
+}
+
 /// Saves an image as a **binary** PPM file.
 bool save_ppm6(const std::vector<RGBColor>& data, Resolution w, Resolution h,
                const std::string &file_name_, bool gamma) {

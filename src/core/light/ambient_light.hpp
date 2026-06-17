@@ -7,8 +7,7 @@ namespace rt {
     class AmbientLight : public Light {
         public:
 
-            AmbientLight(RGBColor intensity, RGBColor scale) :
-                            Light(intensity, scale) {flag = light_flag_e::ambient;};
+            AmbientLight(RGBColor intensity, RGBColor scale);
             RGBColor sample_Li( const Surfel& hit, Vec3* wi, VisibilityTester* vis ) override;
     };
 }

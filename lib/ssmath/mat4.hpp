@@ -262,7 +262,7 @@ template <typename T>
             * @brief Transforma a matriz em sua forma transposta.
             * @return mat4<T> Matriz transposta gerada a partir da matriz original.
             */
-            inline mat4& transpose() const {
+            inline mat4<T> transpose() const {
                 return mat4<T>(mat[0], mat[4], mat[8],  mat[12], 
                                mat[1],  mat[5], mat[9], mat[13],
                                mat[2], mat[6], mat[10], mat[14],

@@ -6,6 +6,14 @@
 #include <cmath>
 
 namespace rt {
+    SpotLight::SpotLight(Point3 pos, Vec3 axis, Degrees cutoff, Degrees falloff, int world_radius,
+            RGBColor intensity, RGBColor scale, Vec3 attenuation)
+
+      : Light(intensity, scale), spot_pos(pos), spot_axis(axis), attenuation(attenuation),
+        cutoff_angle(cutoff), falloff_angle(falloff), world_radius(world_radius) 
+        {
+            flag = light_flag_e::spot;
+        };
 
     RGBColor SpotLight::sample_Li(const Surfel &hit, Vec3 *wi, VisibilityTester* vis){
     

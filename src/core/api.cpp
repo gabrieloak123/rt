@@ -5,6 +5,22 @@
 #include <utility>
 
 #include "api.hpp"
+#include <memory>
+#include <unordered_map>
+
+
+#include "paramset.hpp"
+#include "primitive.hpp"
+#include "scenes.hpp"
+#include "background.hpp"
+#include "error.hpp"
+#include "film.hpp"
+#include "parser.hpp"
+
+#include "include_integrator.hpp"
+#include "light/include_lights.hpp"
+#include "include_primitive.hpp"
+#include "include_material.hpp"
 #include "bvh_accel.hpp"
 #include "common.hpp"
 #include "sphere.hpp"
@@ -13,6 +29,7 @@
 #include "scenes.hpp"
 #include "toonIntegrator.hpp"
 #include "toon_material.hpp"
+#include "transform.hpp"
 #include "triangle.hpp"
 
 

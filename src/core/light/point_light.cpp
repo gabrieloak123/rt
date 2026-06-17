@@ -5,6 +5,9 @@
 
 namespace rt {
 
+PointLight::PointLight(Point3 p, RGBColor intensity, RGBColor scale, Vec3 attenuation) :
+                            Light(intensity, scale), p(p), attenuation(attenuation) {flag = light_flag_e::point;};
+
 RGBColor PointLight::sample_Li(const Surfel& hit, Vec3* wi, VisibilityTester* vis){
     Vec3 direction = p - hit.p;
     *wi = unit_vec(direction);

@@ -8,10 +8,6 @@
 #include "film.hpp"
 #include "ray.hpp"
 
-using Mat4 = mat4<double>;
-using Point3 = vec3<double>;
-using Point4 = vec4<double>;
-using Vec3 = vec3<double>;
 
 namespace rt {
 

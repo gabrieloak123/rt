@@ -12,8 +12,7 @@ namespace rt {
             
             double att{1};
 
-            PointLight(Point3 p, RGBColor intensity, RGBColor scale, Vec3 attenuation) :
-                            Light(intensity, scale), p(p), attenuation(attenuation) {flag = light_flag_e::point;};
+            PointLight(Point3 p, RGBColor intensity, RGBColor scale, Vec3 attenuation);
             RGBColor sample_Li( const Surfel& hit, Vec3* wi, VisibilityTester* vis  ) override;
     };
 }

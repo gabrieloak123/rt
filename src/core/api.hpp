@@ -2,25 +2,29 @@
 #define API_HPP
 
 #include <memory>
+#include <vector>
 #include <unordered_map>
+#include <string>
 
 
-#include "paramset.hpp"
-#include "primitive.hpp"
-#include "scenes.hpp"
-#include "background.hpp"
-#include "error.hpp"
-#include "film.hpp"
 #include "parser.hpp"
+#include "common.hpp"
 
-#include "include_integrator.hpp"
-#include "light/include_lights.hpp"
-#include "include_primitive.hpp"
-#include "include_material.hpp"
+using Resolution = uint16_t;
 
 namespace rt {
+  class Background;
+  class Camera;
+  class Integrator;
+  class Scene;
+  class Light;
+  class Primitive;
+  class Material;
+  class Film;
+  enum AggregateType { LIST = 0, BVH };
 
 struct RenderOptions {
+  
   std::shared_ptr<Background> background;
   std::shared_ptr<Camera> camera;
   std::unique_ptr<Integrator> integrator;
@@ -29,7 +33,7 @@ struct RenderOptions {
 
   std::vector<std::shared_ptr<Light>> light_sources;
   std::vector<std::shared_ptr<Primitive>> elements;
-  std::unordered_map<string, ParamSet> setup_params;
+  std::unordered_map<std::string, ParamSet> setup_params;
 
   std::map<std::string, std::shared_ptr<Material>> material_memory;
   std::shared_ptr<Material> current_material;

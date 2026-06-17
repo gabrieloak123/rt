@@ -4,6 +4,13 @@
 #include <memory>
 
 namespace rt {
+bool BVHNode::is_leaf() const { return left == nullptr && right == nullptr; }
+
+BVHAccel::BVHAccel(const std::vector<std::shared_ptr<Primitive>> &prims, int n_prims) {
+    auto dummy = prims;
+	max_prims_per_node = n_prims;
+    root = create_bvh(dummy);
+  }
 
 std::unique_ptr<BVHNode>
 BVHAccel::create_bvh(std::vector<std::shared_ptr<Primitive>> &prims) {

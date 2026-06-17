@@ -10,6 +10,9 @@
 
 namespace rt {
 
+    ToonIntegrator::ToonIntegrator(std::shared_ptr<Camera> cam, std::vector<double> mapping_interval, int n_intervals, int max_depth) 
+                          : SamplerIntegrator(cam, max_depth), mapping_interval(mapping_interval), n_intervals(n_intervals){};
+
     std::optional<RGBColor> ToonIntegrator::Li(const Ray& ray, const rt::Scene& scene, const int& depth) const {
         RGBColor L(0, 0, 0);
         Surfel isect;

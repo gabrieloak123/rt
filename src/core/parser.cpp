@@ -5,7 +5,7 @@
 #include "common.hpp"
 #include "tinyxml2/tinyxml2.h"
 #include <CLI11/CLI11.hpp>
-
+#include "error.hpp"
 
 #include "api.hpp"
 #include "parser.hpp"

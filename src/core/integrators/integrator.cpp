@@ -1,6 +1,9 @@
 #include "integrator.hpp"
 
 namespace rt{
+
+SamplerIntegrator::SamplerIntegrator(std::shared_ptr<rt::Camera> cam, int max_depth) : max_depth(max_depth), camera(cam){};
+
 void SamplerIntegrator::render(const rt::Scene& scene){
       // Perform objects initialization here.
   // -------------------------------------------------------------

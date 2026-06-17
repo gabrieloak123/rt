@@ -21,7 +21,7 @@ class SamplerIntegrator : public Integrator {
         std::shared_ptr<rt::Camera> camera;
     public:
         virtual ~SamplerIntegrator() = default;
-        SamplerIntegrator(std::shared_ptr<rt::Camera> cam, int max_depth) : max_depth(max_depth), camera(cam){};
+        SamplerIntegrator(std::shared_ptr<rt::Camera> cam, int max_depth);
 
         virtual std::optional<RGBColor> Li(const Ray& ray, const rt::Scene& scene, const int& depth) const = 0;
         virtual void render(const rt::Scene& scene) override;

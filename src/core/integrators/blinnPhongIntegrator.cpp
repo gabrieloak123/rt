@@ -9,6 +9,7 @@
 #include <optional>
 
 namespace rt {
+    BlinnPhongIntegrator::BlinnPhongIntegrator(std::shared_ptr<rt::Camera> cam, int max_depth) : SamplerIntegrator(cam, max_depth){}
 
     std::optional<RGBColor> BlinnPhongIntegrator::Li(const Ray& ray, const rt::Scene& scene, const int& depth) const {
         RGBColor L(0, 0, 0);
