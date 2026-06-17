@@ -1,25 +1,39 @@
 #ifndef TRANSFORM_HPP
 #define TRANSFORM_HPP
 
-#include "camera.hpp"
+#include "common.hpp"
+
 namespace rt {
+    
+    class Bounds3f;
+    class Surfel;
+    class Ray;
 
     class Transform {
         private:
             Mat4 t_matrix;     //< Transformation Matrix
             Mat4 t_matrix_inv; //< Inverse Transformation Matrix
         public:
-            Transform() : t_matrix(), t_matrix_inv() {};
-            Transform(const Mat4& t_matrix) : t_matrix(t_matrix), t_matrix_inv(t_matrix.inverse()) {};
-            Transform(const Mat4& t_matrix, const Mat4& t_matrix_inv) : t_matrix(t_matrix), t_matrix_inv(t_matrix_inv) {};
+            Transform();
+            Transform(const Mat4& t_matrix);
+            Transform(const Mat4& t_matrix, const Mat4& t_matrix_inv);
+            Transform(const Transform&) = default;
 
-            Transform inverse()   {return   Transform(t_matrix_inv, t_matrix);}
-            Transform transpose() {return Transform(t_matrix.transpose(), t_matrix_inv.transpose());}
+            Transform inverse()   const;
+            Transform transpose() const;
 
             Transform translate(const Vec3& delta);
             Transform rotate(const double& angle, const Vec3& delta);
             Transform scale(const Vec3& scales);
             Transform lookAt(const Vec3& look_from, const Vec3& vpn, const Vec3& vup);
+
+            void operator=(const Transform& t);
+            Point4 operator()(const Point4& p, bool isNormal=false) const;
+            Point3 operator()(const Point3& p, const bool& isNormal=false) const;
+            Ray operator()(const Ray& p) const;
+            Bounds3f operator()(const Bounds3f& b) const;
+            Surfel operator()(const Surfel& s) const;
+            Transform operator()(const Transform& t) const;
 
             Mat4 getTMat()    const {return this->t_matrix;};
             Mat4 getTMatInv() const {return this->t_matrix_inv;};

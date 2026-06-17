@@ -5,8 +5,10 @@
 namespace rt{
 
 bool Sphere::intersect(const Ray &r, float *t_hit, Surfel *sf) const {
-  Point3 oc = r.getOrigin() - center;
-  Vec3 v = r.getDirection();
+
+  auto newr = (*world_to_obj)(r);
+  Point3 oc = newr.getOrigin() - center;
+  Vec3 v = newr.getDirection();
 
   double A = dot(v, v);
   double hB = dot(oc, v);
@@ -28,9 +30,9 @@ bool Sphere::intersect(const Ray &r, float *t_hit, Surfel *sf) const {
 	  std::swap(t0, t1);
   }
 
-  if (t0 < r.getTMin() || t0 > r.getTMax()) {
+  if (t0 < newr.getTMin() || t0 > newr.getTMax()) {
       t0 = t1;
-      if (t0 < r.getTMin() || t0 > r.getTMax()) {
+      if (t0 < newr.getTMin() || t0 > newr.getTMax()) {
           return false; 
       }
   }
@@ -39,13 +41,14 @@ bool Sphere::intersect(const Ray &r, float *t_hit, Surfel *sf) const {
 
   if (sf) {
     sf->time = t0;
-    sf->p = r(t0);
+    sf->p = newr(t0);
     sf->n = (sf->p - center) / radius;
 
     if (flips_normal) sf->n = -sf->n;
     
-    sf->wo = -r.getDirection();
+    sf->wo = -newr.getDirection();
 
+    *sf = (*obj_to_world)(*sf);
   }
 
   return true;
@@ -53,13 +56,16 @@ bool Sphere::intersect(const Ray &r, float *t_hit, Surfel *sf) const {
 
 bool Sphere::box(Bounds3f &box) const {
 	Vec3 r_vec =Vec3(radius, radius, radius);
-	box = Bounds3f(center - r_vec, center + r_vec);
+  auto tempc = (*world_to_obj)(center);
+	box = Bounds3f(tempc - r_vec, tempc + r_vec);
+  box = (*obj_to_world)(box);
 	return true;
 };
 
 bool Sphere::intersect_p(const Ray &r) const {
-  Point3 oc = r.getOrigin() - center;
-  Vec3 v = r.getDirection();
+  auto newr = (*world_to_obj)(r);
+  Point3 oc = newr.getOrigin() - center;
+  Vec3 v = newr.getDirection();
 
   double A = dot(v, v);
   double hB = dot(oc, v);
@@ -81,10 +87,10 @@ bool Sphere::intersect_p(const Ray &r) const {
 	  std::swap(t0, t1);
   }
 
-  if (t0 >= r.getTMin() && t0 <= r.getTMax())
+  if (t0 >= newr.getTMin() && t0 <= newr.getTMax())
     return true;
 
-  if (t1 >= r.getTMin() && t1 <= r.getTMax())
+  if (t1 >= newr.getTMin() && t1 <= newr.getTMax())
     return true;
 
   return false;

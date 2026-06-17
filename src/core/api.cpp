@@ -264,6 +264,7 @@ void API::world_end(const ParamSet &ps) {
   // instantiated somewhere else.
 
   auto primitive_list = std::make_shared<PrimitiveList>();
+  Transform t;
   for (auto &obj : m_render_options->elements) {
     primitive_list->add(obj);
   }
@@ -399,6 +400,9 @@ void API::object(const ParamSet &ps) {
   check_in_world_block_state("API::object");
   auto type = ps.retrieve<std::string>("type", "unknown");
   bool flip = ps.retrieve<bool>("flip", false);
+  auto t = std::make_shared<Transform>();
+  auto t1 = std::make_shared<Transform>(t->inverse());
+
   if (type == "unknown") {
     ERROR("API::object(): Missing \"type\" specification for the object.");
   }
@@ -408,17 +412,11 @@ void API::object(const ParamSet &ps) {
       ERROR("API::object(): Missing \"radius\" specification for the sphere.");
     }
     auto center = ps.retrieve<Point3>("center", {0, 0, 0});
-    auto sphere = std::make_shared<Sphere>(flip, center, radius);
+    auto sphere = std::make_shared<Sphere>(flip, center, radius, t, t1);
     m_render_options->elements.push_back(std::make_shared<GeometricPrimitive>(sphere, m_render_options->current_material));
   } else if (type == "triangle") {
-    // Point3 p0 = ps.retrieve<Point3>("p0", Point3(-1, 0, 0));
-    // Point3 p1 = ps.retrieve<Point3>("p1", Point3(1, 0, 0));
-    // Point3 p2 = ps.retrieve<Point3>("p2", Point3(0, 1, 0));
-    // auto triangle = std::make_shared<Triangle>(
-    //    flip, p0, p1, p2);
-    // m_render_options->elements.push_back(std::make_shared<GeometricPrimitive>(triangle, m_render_options->current_material));
-  } else if (type == "trianglemesh"){
-    auto triangles = rt::create_triangle_mesh_shape(flip, ps);
+  } else if (type == "trianglemesh"){  
+    auto triangles = rt::create_triangle_mesh_shape(flip,t, t1, ps);
     for(const auto& shape : triangles){
       auto primitive = std::make_shared<GeometricPrimitive>(shape, m_render_options->current_material);
       m_render_options->elements.push_back(primitive);
@@ -429,7 +427,7 @@ void API::object(const ParamSet &ps) {
     Point3 p = ps.retrieve<Point3>("point", Point3(0, 0, 0));
     Vec3 n = ps.retrieve<Vec3>("normal", Vec3(0, 1, 0));
 
-    auto plane = std::make_shared<Plane>(flip, p, n);
+    auto plane = std::make_shared<Plane>(flip, p, n, t, t1);
     m_render_options->elements.push_back(std::make_shared<GeometricPrimitive>(plane, m_render_options->current_material));
   } else
     ERROR("API::object(): Missing \"type\" specification for the object.");
@@ -511,21 +509,6 @@ void API::named_material(const ParamSet &ps) {
 }
 
 void API::render() {
-  // Perform objects initialization here.
-  // -------------------------------------------------------------
-  // The Film object holds the memory for the image.
-
-  // m_render_options->integrator =
-  // make_integrator(m_render_options->setup_params["integrator"]);
-
-  // auto primitive_list = std::make_shared<PrimitiveList>();
-  // for(auto& obj : m_render_options->elements){
-  //   primitive_list->add(obj);
-  // }
-
-  // m_render_options->scene = std::make_unique<Scene>(primitive_list,
-  // m_render_options->background, m_render_options->light_sources);
-
   if (m_render_options->integrator && m_render_options->scene) {
     m_render_options->integrator->render(*m_render_options->scene);
   }

@@ -1,14 +1,72 @@
 #include "transform.hpp"
-#include "ssmath/vec2.hpp"
 #include <cmath>
+#include "ray.hpp"
+#include "fbounds.hpp"
+#include "surfel.hpp"
+
 
 namespace rt{
+
+    Transform::Transform() : t_matrix(), t_matrix_inv() {};
+    Transform::Transform(const Mat4& t_matrix) : t_matrix(t_matrix), t_matrix_inv(t_matrix.inverse()) {};
+    Transform::Transform(const Mat4& t_matrix, const Mat4& t_matrix_inv) : t_matrix(t_matrix), t_matrix_inv(t_matrix_inv) {};
+
+    Transform Transform::inverse()   const {return   Transform(t_matrix_inv, t_matrix);}
+    Transform Transform::transpose() const {return Transform(t_matrix.transpose(), t_matrix_inv.transpose());}
+
+    void Transform::operator=(const Transform& t){
+        t_matrix = t.getTMat();
+        t_matrix_inv = t.getTMatInv();
+    }
+    Point4 Transform::operator()(const Point4& p, bool isNormal) const {
+        if(!isNormal)
+            return t_matrix * p;
+        return t_matrix_inv.transpose() * p;
+    }
+    Point3 Transform::operator()(const Point3& p, const bool& isNormal) const{
+        if(!isNormal)
+            return (t_matrix * Vec4(p, 1)).xyz();
+        return (t_matrix_inv.transpose() * Vec4(p, 0)).xyz();
+    }
+    
+    Ray Transform::operator()(const Ray& p) const {return Ray((t_matrix_inv * Point4(p.getOrigin(), 1)).xyz(),
+                                            (t_matrix_inv * Vec4(p.getDirection(), 0)).xyz());}
+    Bounds3f Transform::operator()(const Bounds3f& b) const {
+        const Transform &M = *this;
+        Bounds3f ret(b);    
+
+        ret.merge(M(Point3(b.max().x(), b.min().y(), b.min().z())));
+        ret.merge(M(Point3(b.min().x(), b.max().y(), b.min().z())));
+        ret.merge(M(Point3(b.min().x(), b.min().y(), b.max().z())));
+        ret.merge(M(Point3(b.min().x(), b.max().y(), b.max().z())));
+        ret.merge(M(Point3(b.max().x(), b.max().y(), b.min().z())));
+        ret.merge(M(Point3(b.max().x(), b.min().y(), b.max().z())));
+        ret.merge(M(Point3(b.max().x(), b.max().y(), b.max().z())));
+        
+        return ret;
+    }
+
+    Surfel Transform::operator()(const Surfel& s) const{
+        auto temp = s;
+        temp.n = (*this)(s.n, true);
+        temp.p = (*this)(s.p);
+        temp.wo= (*this)(s.wo, true);
+
+        temp.n.mk_unit_vec();
+        temp.wo.mk_unit_vec();
+
+        return temp;
+    }
+
+    Transform Transform::operator()(const Transform& t) const {
+        return Transform(t_matrix * t.getTMat(),t.getTMatInv() * t_matrix_inv);
+    }
 
     Transform Transform::translate(const Vec3& delta)
     {
         Mat4 m(   1, 0, 0, delta.x(),
                   0, 1, 0, delta.y(),
-                  0, 0, 1, delta.y(),
+                  0, 0, 1, delta.z(),
                   0, 0, 0, 1);
 
         Mat4 minv(1, 0, 0, -delta.x(),
@@ -73,7 +131,7 @@ namespace rt{
                 u[2], v[2], w[2], look_from[2], 
                 0.0, 0.0, 0.0,            1.0);
 
-        Mat4 m_camera_to_world_inv = t_matrix.inverse();
+        Mat4 m_camera_to_world_inv = m_camera_to_world.inverse();
 
         return Transform(m_camera_to_world, m_camera_to_world_inv);
     }

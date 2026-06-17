@@ -1,4 +1,5 @@
 #include "triangle.hpp"
+#include "transform.hpp"
 #include <cstddef>
 #include <memory>
 #include <typeinfo>
@@ -17,8 +18,10 @@ namespace rt {
     auto p1 = this->mesh->vertices[v[1]];
     auto p2 = this->mesh->vertices[v[2]];
 
-    Vec3 o = r.getOrigin() - p0; //< Vector (o - v0)
-    Vec3 d = r.getDirection();   //< Ray direction
+    Ray newr = (*world_to_obj)(r); 
+
+    Vec3 o = (newr.getOrigin() - p0); //< Vector (o - v0)
+    Vec3 d = (newr.getDirection());   //< Ray direction
     Vec3 v20 = p2 - p0;          //< Vector (v2 - v0)
     Vec3 v10 = p1 - p0;          //< Vector (v1 - v0)
 
@@ -48,7 +51,7 @@ namespace rt {
     }
 
     double t = invdet * dot(v20, vcross); //< t = det(-d, v10, O) / det(v20, v10, d)
-    if(t < r.getTMin() || t > r.getTMax()){      //< t in range
+    if(t < newr.getTMin() || t > newr.getTMax()){      //< t in range
       return false;
     }
 
@@ -56,8 +59,8 @@ namespace rt {
 
     if (sf) {
       sf->time = t;
-      sf->p = r(t);
-      sf->wo = -r.getDirection();
+      sf->p = newr(t);
+      sf->wo = -newr.getDirection();
 
       if(!mesh->normals.empty() && n[0] >= 0 && n[1] >= 0 && n[2] >= 0){  
         Vec3 n0 = mesh->normals[n[0]];
@@ -89,7 +92,10 @@ namespace rt {
       if (flips_normal) {
         sf->n = -sf->n;
       }
+
+      *sf = (*obj_to_world)(*sf);
     }
+    
 
     return true;
   };
@@ -98,8 +104,10 @@ namespace rt {
     auto p1 = this->mesh->vertices[v[1]];
     auto p2 = this->mesh->vertices[v[2]];
 
-    Vec3 o = r.getOrigin() - p0; //< Vector (o - v0)
-    Vec3 d = r.getDirection();         //< Ray direction
+    auto newr = (*world_to_obj)(r);
+
+    Vec3 o = newr.getOrigin() - p0; //< Vector (o - v0)
+    Vec3 d = newr.getDirection();         //< Ray direction
     Vec3 v20 = p2 - p0;    //< Vector (v2 - v0)
     Vec3 v10 = p1 - p0;    //< Vector (v1 - v0)
 
@@ -129,7 +137,7 @@ namespace rt {
     }
 
     double t = invdet * dot(v20, vcross); //< t = det(-d, v10, O) / det(v20, v10, d)
-    if(t < r.getTMin() || t > r.getTMax()){      //< t in range
+    if(t < newr.getTMin() || t > newr.getTMax()){      //< t in range
       return false;
     }
     return true;
@@ -140,6 +148,10 @@ namespace rt {
     Point3 p0 = mesh->vertices[v[0]];
     Point3 p1 = mesh->vertices[v[1]];
     Point3 p2 = mesh->vertices[v[2]];
+
+    p0 = (*world_to_obj)(p0);
+    p1 = (*world_to_obj)(p1);
+    p2 = (*world_to_obj)(p2);
 
     // Calcular limites da bounding box com base em x, y, z
     Point3 p_min(
@@ -153,11 +165,12 @@ namespace rt {
         ffmax(p0.z(), ffmax(p1.z(), p2.z()))
     );
 
-	box = Bounds3f(p_min, p_max);
+	  box = Bounds3f(p_min, p_max);
+    box = (*obj_to_world)(box);
     return true;
 }
 
-  std::vector<std::shared_ptr<Shape>> create_triangle_mesh_shape(bool flip_normals, const ParamSet& ps){
+  std::vector<std::shared_ptr<Shape>> create_triangle_mesh_shape(bool flip_normals, std::shared_ptr<Transform> t, std::shared_ptr<Transform> tinv, const ParamSet& ps){
   bool bkfc{ true };                // Controls whether the backface cull should be done or not.
   bool reverse_vertex_order{ false };  // If this is true, we store vertices in
                                        // reverse order inside the mesh.
@@ -259,8 +272,10 @@ namespace rt {
 
   // At this point, the tri_mesh_data object has already been filled in with
   // data coming either from a OBJ file or from the scene file.
-  return create_triangle_mesh(mesh,
-                              bkfc, 
+  return create_triangle_mesh(mesh, 
+                              t,
+                              tinv,
+                              bkfc,
                               flip_normals);  // Note the use of move semantics here.
 }
 
@@ -487,14 +502,14 @@ void extract_obj_data(const tinyobj::attrib_t& attrib,
 }
 
 /// This function creates the internal data structure, required by the RT3.
-std::vector<std::shared_ptr<Shape>> create_triangle_mesh(const std::shared_ptr<TriangleMesh>& mesh, const bool& backface_cull, const bool& flip) {
+std::vector<std::shared_ptr<Shape>> create_triangle_mesh(const std::shared_ptr<TriangleMesh>& mesh, const std::shared_ptr<Transform>& t, const std::shared_ptr<Transform>& tinv, const bool& backface_cull, const bool& flip) {
   // List of shapes (triangles) we need to return to the client.
   std::vector<std::shared_ptr<Shape>> tris;
   // Create the triangles, which are just references to the mesh database.
   tris.reserve(mesh->n_triangles);
 
   for (int i = 0; i < mesh->n_triangles; ++i) {
-    tris.emplace_back(std::make_shared<Triangle>(flip, mesh, i, backface_cull));
+    tris.emplace_back(std::make_shared<Triangle>(flip, mesh, i, t, tinv, backface_cull));
   }
   return tris;
 }
