@@ -28,8 +28,8 @@ namespace rt {
             Transform lookAt(const Vec3& look_from, const Vec3& vpn, const Vec3& vup);
 
             void operator=(const Transform& t);
-            Point4 operator()(const Point4& p, bool isNormal=false) const;
-            Point3 operator()(const Point3& p, const bool& isNormal=false, Vec3* = nullptr) const;
+            Point4 operator()(const Point4& p,  bool isNormal=false) const;
+            Point3 operator()(const Point3& p, const bool& isVector=false, const bool& isNormal=false, Vec3* = nullptr) const;
             Ray operator()(const Ray& p) const;
             Bounds3f operator()(const Bounds3f& b) const;
             Surfel operator()(const Surfel& s) const;

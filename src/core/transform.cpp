@@ -27,13 +27,14 @@ namespace rt{
     Point4 Transform::operator()(const Point4& p, bool isNormal) const {
         if(!isNormal)
             return t_matrix * p;
-        return t_matrix * p;
+        return t_matrix_inv.transpose() * p;
     }
-    Point3 Transform::operator()(const Point3& p, const bool& isNormal, Vec3* err) const{
-        if(!isNormal)
-        {
+    Point3 Transform::operator()(const Point3& p, const bool& isVector, const bool& isNormal, Vec3* err) const{
+        if(!isVector)
+            {
             Point3 result = (t_matrix * Vec4(p, 1)).xyz();
-            if(err)
+
+            if(err) 
             {
                 double xErr = (std::abs(t_matrix(0, 0) * p.x()) + std::abs(t_matrix(0, 1) * p.y()) + std::abs(t_matrix(0, 2) * p.z()) + std::abs(t_matrix(0, 3)));
                 double yErr = (std::abs(t_matrix(1, 0) * p.x()) + std::abs(t_matrix(1, 1) * p.y()) + std::abs(t_matrix(1, 2) * p.z()) + std::abs(t_matrix(1, 3)));
@@ -43,19 +44,20 @@ namespace rt{
             
             return result;
         }
-        return (t_matrix * Vec4(p, 0)).xyz();
+        if(!isNormal) return (t_matrix * Vec4(p, 0)).xyz();
+        return (t_matrix_inv.transpose() * Vec4(p, 0)).xyz();
     }
     
     Ray Transform::operator()(const Ray& r) const {
         Vec3 err;
-        Point3 o = (*this)(r.getOrigin(), false, &err);
-        Vec3 d = (*this)(r.getDirection(), true);  
-        double lengthSqr = d.length();
+        Point3 o = (*this)(r.getOrigin(), false, false, &err);
+        Vec3 d = (*this)(r.getDirection(), true, false);  
+        double lengthSqr = d.sqr_length();
         double tMax = r.getTMax();
 
         if (lengthSqr > 0) {
             Vec3 absD = {std::abs(d[0]), std::abs(d[1]), std::abs(d[2])};
-            double dt = dot(d, err) / lengthSqr;
+            double dt = dot(absD, err) / lengthSqr;
             o += d * dt;
             tMax -= dt;
         }
@@ -79,9 +81,9 @@ namespace rt{
 
     Surfel Transform::operator()(const Surfel& s) const{
         auto temp = s;
-        temp.n = (*this)(s.n, true);
-        temp.p = (*this)(s.p);
-        temp.wo= (*this)(s.wo, true);
+        temp.n = (*this)(s.n, true, true);
+        temp.p = (*this)(s.p, false);
+        temp.wo= (*this)(s.wo, true, false);
 
         temp.n.mk_unit_vec();
         temp.wo.mk_unit_vec();
