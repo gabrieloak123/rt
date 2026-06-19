@@ -13,6 +13,7 @@
 
 
 using Vec4 = vec4<double>;
+using Mat3 = mat3<double>;
 using Mat4 = mat4<double>;
 using Point2 = vec2<double>;
 using Point3 = vec3<double>;

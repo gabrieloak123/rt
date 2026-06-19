@@ -29,8 +29,11 @@ namespace rt {
 
     double det = dot(v10, C);
 
-    if (backface_cull && det > -epsilon) {
-        return false; 
+    bool swaps_handedness =  0 > (*obj_to_world).getTMat3().det(); // determinante 3x3 < 0
+
+    if (backface_cull) {
+        bool cull = swaps_handedness ? (det < epsilon) : (det > -epsilon);
+        if (cull) return false;
     }
 
     if(std::abs(det) < epsilon){
@@ -68,12 +71,12 @@ namespace rt {
         Vec3 n2 = mesh->normals[n[2]];
           
         sf->n = n0 * (1.0 - U - V) + n1 * U + n2 * V;
-        sf->n.mk_unit_vec();
+        
       }
       
       else {
         sf->n = cross(v10, v20);
-        sf->n.mk_unit_vec();
+        
       }
       
       if(!mesh->uvcoords.empty() && uv[0] >= 0 && uv[1] >= 0 && uv[2] >= 0){  
@@ -93,7 +96,7 @@ namespace rt {
         sf->n = -sf->n;
       }
 
-      *sf = (*obj_to_world)(*sf);
+      *sf = (*world_to_obj)(*sf);
     }
     
 
@@ -149,9 +152,9 @@ namespace rt {
     Point3 p1 = mesh->vertices[v[1]];
     Point3 p2 = mesh->vertices[v[2]];
 
-    p0 = (*world_to_obj)(p0);
-    p1 = (*world_to_obj)(p1);
-    p2 = (*world_to_obj)(p2);
+    p0 = (*obj_to_world)(p0);
+    p1 = (*obj_to_world)(p1);
+    p2 = (*obj_to_world)(p2);
 
     // Calcular limites da bounding box com base em x, y, z
     Point3 p_min(
@@ -166,7 +169,8 @@ namespace rt {
     );
 
 	  box = Bounds3f(p_min, p_max);
-    box = (*obj_to_world)(box);
+
+    box = (*world_to_obj)(box);
     return true;
 }
 

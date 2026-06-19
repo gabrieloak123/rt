@@ -5,6 +5,8 @@
 #include "scenes.hpp"
 #include "visibilityTester.hpp"
 #include <algorithm>
+#include <cmath>
+#include <limits>
 #include <memory>
 #include <optional>
 
@@ -17,6 +19,7 @@ namespace rt {
         if(!scene.intersect(ray, &isect)){
             return std::nullopt;
         }
+        
         if (dot(ray.getDirection(), isect.n) > 0) {
            isect.n = -isect.n;
         }
@@ -75,7 +78,7 @@ namespace rt {
             auto rd = n * 2 * dot(n, v) - v;
             rd.mk_unit_vec();
 
-            Ray reflected_ray = Ray(isect.p + rd * 0.0001f, rd);
+            Ray reflected_ray = Ray(isect.p + isect.n * 0.001, rd);
             auto tempL = this->Li(reflected_ray, scene, depth + 1);
 
             if(tempL.has_value()){

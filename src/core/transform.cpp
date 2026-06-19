@@ -1,11 +1,17 @@
 #include "transform.hpp"
 #include <cmath>
+#include "common.hpp"
 #include "ray.hpp"
 #include "fbounds.hpp"
 #include "surfel.hpp"
 
 
 namespace rt{
+
+    inline double gamma(int n) {
+        double epsilon = std::numeric_limits<double>::epsilon() * 0.5;
+        return (n * epsilon) / (1.0 - n * epsilon);
+    }   
 
     Transform::Transform() : t_matrix(), t_matrix_inv() {};
     Transform::Transform(const Mat4& t_matrix) : t_matrix(t_matrix), t_matrix_inv(t_matrix.inverse()) {};
@@ -21,16 +27,41 @@ namespace rt{
     Point4 Transform::operator()(const Point4& p, bool isNormal) const {
         if(!isNormal)
             return t_matrix * p;
-        return t_matrix_inv.transpose() * p;
+        return t_matrix * p;
     }
-    Point3 Transform::operator()(const Point3& p, const bool& isNormal) const{
+    Point3 Transform::operator()(const Point3& p, const bool& isNormal, Vec3* err) const{
         if(!isNormal)
-            return (t_matrix * Vec4(p, 1)).xyz();
-        return (t_matrix_inv.transpose() * Vec4(p, 0)).xyz();
+        {
+            Point3 result = (t_matrix * Vec4(p, 1)).xyz();
+            if(err)
+            {
+                double xErr = (std::abs(t_matrix(0, 0) * p.x()) + std::abs(t_matrix(0, 1) * p.y()) + std::abs(t_matrix(0, 2) * p.z()) + std::abs(t_matrix(0, 3)));
+                double yErr = (std::abs(t_matrix(1, 0) * p.x()) + std::abs(t_matrix(1, 1) * p.y()) + std::abs(t_matrix(1, 2) * p.z()) + std::abs(t_matrix(1, 3)));
+                double zErr = (std::abs(t_matrix(2, 0) * p.x()) + std::abs(t_matrix(2, 1) * p.y()) + std::abs(t_matrix(2, 2) * p.z()) + std::abs(t_matrix(2, 3)));
+                *err = Vec3(xErr, yErr, zErr) * gamma(3);
+            }
+            
+            return result;
+        }
+        return (t_matrix * Vec4(p, 0)).xyz();
     }
     
-    Ray Transform::operator()(const Ray& p) const {return Ray((t_matrix_inv * Point4(p.getOrigin(), 1)).xyz(),
-                                            (t_matrix_inv * Vec4(p.getDirection(), 0)).xyz());}
+    Ray Transform::operator()(const Ray& r) const {
+        Vec3 err;
+        Point3 o = (*this)(r.getOrigin(), false, &err);
+        Vec3 d = (*this)(r.getDirection(), true);  
+        double lengthSqr = d.length();
+        double tMax = r.getTMax();
+
+        if (lengthSqr > 0) {
+            Vec3 absD = {std::abs(d[0]), std::abs(d[1]), std::abs(d[2])};
+            double dt = dot(d, err) / lengthSqr;
+            o += d * dt;
+            tMax -= dt;
+        }
+
+        return Ray(o, d, r.getTMin(), tMax);
+    }
     Bounds3f Transform::operator()(const Bounds3f& b) const {
         const Transform &M = *this;
         Bounds3f ret(b);    
@@ -88,9 +119,9 @@ namespace rt{
         double ky = k.y();
         double kz = k.z(); 
 
-        Mat4 m(   c + c1 * kx * kx, c1 * kx * ky - s * kz, c1 * kx * kz + s * ky, 0, 
-                  c1 * kx * ky + s * kz, c1 * ky * ky, c1 * ky * kz - s * kx, 0,
-                  c1 * kx * kz - s * ky, c1 * ky * kz + s * kx, c + c1 * kz * kz, 0,
+        Mat4 m(   c + c1 * kx * kx,      c1 * kx * ky - s * kz, c1 * kx * kz + s * ky, 0, 
+                  c1 * kx * ky + s * kz, c + c1 * ky * ky,      c1 * ky * kz - s * kx, 0,
+                  c1 * kx * kz - s * ky, c1 * ky * kz + s * kx, c + c1 * kz * kz,      0,
                   0, 0, 0, 1);
 
         Mat4 minv = m.transpose();
