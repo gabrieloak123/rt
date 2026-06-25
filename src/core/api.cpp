@@ -433,6 +433,7 @@ void API::object(const ParamSet &ps) {
   auto t = std::make_shared<Transform>(curr_TM);
   auto t1 = std::make_shared<Transform>(curr_TM.inverse());
   auto primitive = std::make_shared<GeometricPrimitive>();
+
   std::shared_ptr<Primitive> aggregate;
   if (type == "unknown") {
     ERROR("API::object(): Missing \"type\" specification for the object.");
@@ -456,7 +457,6 @@ void API::object(const ParamSet &ps) {
   else if (type == "trianglemesh"){  
 
     auto triangles = rt::create_triangle_mesh_shape(flip, t, t1, ps);
-    std::vector<std::shared_ptr<Primitive>> local_mesh_prims;
     for(const auto& shape : triangles) {
       auto primitive = std::make_shared<GeometricPrimitive>(shape, m_render_options->current_material);
       auto pr = std::make_shared<TransformedPrimitive>(primitive, t, t1);

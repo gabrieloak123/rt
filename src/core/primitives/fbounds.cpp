@@ -58,7 +58,7 @@ namespace rt{
       if (invD < 0.0f) std::swap(t0, t1);
       tmin = ffmax(t0, tmin);
       tmax = ffmin(t1, tmax);
-      if (tmax <= tmin)
+      if (tmax < tmin)
         return false;
     }
     return true;
