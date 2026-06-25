@@ -421,10 +421,51 @@ std::unordered_map<string, vector<string>> tag_catalog{
         "world_end",
         {""}, // no attributes
     },
+    {"push_ctm",
+         {""},
+    },
+    {"pop_ctm",
+         {""},
+    },
+    {"push_gs",
+         {""},
+    },
+    {"pop_gs",
+         {""},
+    },
+
+    {"translate", 
+      {
+        "value",
+      }
+    },
+    {"rotate", 
+      {
+        "angle",
+        "axis",
+      }
+    },
+    {"scale", 
+      {
+        "value",
+      }
+    },
+    {"object_instance_begin", 
+      {
+        "name",
+      }
+    },
+    {"object_instance_end", 
+         {""}
+    },
+    {"object_instance_call",
+         {"name"}
+    }
 };
 
 /// Maps the tag name to its corresponding API function.
-std::unordered_map<string, std::function<void(const ParamSet &)>> api_functions{
+std::unordered_map<string, std::function<void(const ParamSet &)>> api_functions
+{
 
     {"background", API::background}, {"camera", API::camera},
     {"lookat", API::look_at},        {"world_begin", API::world_begin},
@@ -432,7 +473,13 @@ std::unordered_map<string, std::function<void(const ParamSet &)>> api_functions{
     {"material", API::material},     {"object", API::object},
     {"integrator", API::integrator}, {"make_named_material", API::make_named_material},
     {"named_material", API::named_material}, {"light_source", API::light_source},
-    {"aggregator", API::aggregator},
+    {"aggregator", API::aggregator}, {"translate", API::translate},
+    {"rotate", API::rotate}, {"scale", API::scale},
+    {"object_instance_begin", API::obj_instance_begin},
+    {"object_instance_end", API::obj_instance_end},
+    {"object_instance_call", API::obj_instance_call},
+    {"push_ctm", API::push_CTM}, {"pop_ctm", API::pop_CTM},
+    {"push_gs", API::push_GS}, {"pop_gs", API::pop_GS}
 };
 
 /// Maps convertion function to an attribute name.
@@ -511,6 +558,9 @@ std::unordered_map<string, ConverterFunction> converters{
     {"falloff", convert<double>},
     {"world_radius", convert<double>},
     {"max_prims_per_node", convert<int>},
+    {"axis", convert<Point3>},
+    {"value", convert<Point3>},
+    {"angle", convert<double>},
 };
 
 /*!

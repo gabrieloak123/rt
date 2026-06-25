@@ -82,7 +82,7 @@ namespace rt{
     Surfel Transform::operator()(const Surfel& s) const{
         auto temp = s;
         temp.n = (*this)(s.n, true, true);
-        temp.p = (*this)(s.p, false);
+        temp.p = (*this)(s.p, false, false);
         temp.wo= (*this)(s.wo, true, false);
 
         temp.n.mk_unit_vec();
@@ -92,6 +92,9 @@ namespace rt{
     }
 
     Transform Transform::operator()(const Transform& t) const {
+        return Transform(t_matrix * t.getTMat(),t.getTMatInv() * t_matrix_inv);
+    }
+    Transform Transform::operator*(const Transform& t) const {
         return Transform(t_matrix * t.getTMat(),t.getTMatInv() * t_matrix_inv);
     }
 
@@ -146,9 +149,9 @@ namespace rt{
         return Transform(m, minv);
     }
 
-    Transform Transform::lookAt(const Vec3& look_from, const Vec3& vpn, const Vec3& vup){
+    Transform Transform::lookAt(const Vec3& look_from, const Vec3& look_at, const Vec3& vup){
 
-        Vec3 w{vpn}; //< Create the W axis aligned with vpn.
+        Vec3 w{look_from - look_at}; //< Create the W axis aligned with vpn.
         w.mk_unit_vec();
 
         Vec3 u = -cross(vup, w); //< Create the U axis perpendicular to the vup and W.

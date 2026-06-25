@@ -18,10 +18,8 @@ namespace rt {
     auto p1 = this->mesh->vertices[v[1]];
     auto p2 = this->mesh->vertices[v[2]];
 
-    Ray newr = (*world_to_obj)(r); 
-
-    Vec3 o = (newr.getOrigin() - p0); //< Vector (o - v0)
-    Vec3 d = (newr.getDirection());   //< Ray direction
+    Vec3 o = (r.getOrigin() - p0); //< Vector (o - v0)
+    Vec3 d = (r.getDirection());   //< Ray direction
     Vec3 v20 = p2 - p0;          //< Vector (v2 - v0)
     Vec3 v10 = p1 - p0;          //< Vector (v1 - v0)
 
@@ -29,11 +27,9 @@ namespace rt {
 
     double det = dot(v10, C);
 
-    bool swaps_handedness =  0 > (*obj_to_world).getTMat3().det(); // determinante 3x3 < 0
 
     if (backface_cull) {
-        bool cull = swaps_handedness ? (det < epsilon) : (det > -epsilon);
-        if (cull) return false;
+      if (det > -epsilon) return false;
     }
 
     if(std::abs(det) < epsilon){
@@ -54,7 +50,7 @@ namespace rt {
     }
 
     double t = invdet * dot(v20, vcross); //< t = det(-d, v10, O) / det(v20, v10, d)
-    if(t < newr.getTMin() || t > newr.getTMax()){      //< t in range
+    if(t < r.getTMin() || t > r.getTMax()){      //< t in range
       return false;
     }
 
@@ -62,8 +58,8 @@ namespace rt {
 
     if (sf) {
       sf->time = t;
-      sf->p = newr(t);
-      sf->wo = -newr.getDirection();
+      sf->p = r(t);
+      sf->wo = -r.getDirection();
 
       if(!mesh->normals.empty() && n[0] >= 0 && n[1] >= 0 && n[2] >= 0){  
         Vec3 n0 = mesh->normals[n[0]];
@@ -96,7 +92,7 @@ namespace rt {
         sf->n = -sf->n;
       }
 
-      *sf = (*world_to_obj)(*sf);
+      *sf = (*obj_to_world)(*sf);
     }
     
 
@@ -107,10 +103,8 @@ namespace rt {
     auto p1 = this->mesh->vertices[v[1]];
     auto p2 = this->mesh->vertices[v[2]];
 
-    auto newr = (*world_to_obj)(r);
-
-    Vec3 o = newr.getOrigin() - p0; //< Vector (o - v0)
-    Vec3 d = newr.getDirection();         //< Ray direction
+    Vec3 o = r.getOrigin() - p0; //< Vector (o - v0)
+    Vec3 d = r.getDirection();         //< Ray direction
     Vec3 v20 = p2 - p0;    //< Vector (v2 - v0)
     Vec3 v10 = p1 - p0;    //< Vector (v1 - v0)
 
@@ -118,8 +112,11 @@ namespace rt {
 
     double det = dot(v10, C);
 
-    if (backface_cull && det > -epsilon) {
-      return false;
+    bool swaps_handedness =  0 > (*obj_to_world).getTMat3().det();
+
+    if (backface_cull) {
+        bool cull = swaps_handedness ? (det < epsilon) : (det > -epsilon);
+        if (cull) return false;
     }
 
     if(std::abs(det) < epsilon){
@@ -140,7 +137,7 @@ namespace rt {
     }
 
     double t = invdet * dot(v20, vcross); //< t = det(-d, v10, O) / det(v20, v10, d)
-    if(t < newr.getTMin() || t > newr.getTMax()){      //< t in range
+    if(t < r.getTMin() || t > r.getTMax()){      //< t in range
       return false;
     }
     return true;
@@ -170,7 +167,7 @@ namespace rt {
 
 	  box = Bounds3f(p_min, p_max);
 
-    box = (*world_to_obj)(box);
+    box = (*obj_to_world)(box);
     return true;
 }
 
@@ -506,14 +503,21 @@ void extract_obj_data(const tinyobj::attrib_t& attrib,
 }
 
 /// This function creates the internal data structure, required by the RT3.
-std::vector<std::shared_ptr<Shape>> create_triangle_mesh(const std::shared_ptr<TriangleMesh>& mesh, const std::shared_ptr<Transform>& t, const std::shared_ptr<Transform>& tinv, const bool& backface_cull, const bool& flip) {
+std::vector<std::shared_ptr<Shape>> create_triangle_mesh(const std::shared_ptr<TriangleMesh>& mesh, const std::shared_ptr<Transform>& obj_to_world, const std::shared_ptr<Transform>& world_to_obj, const bool& backface_cull, const bool& flip) {
   // List of shapes (triangles) we need to return to the client.
   std::vector<std::shared_ptr<Shape>> tris;
   // Create the triangles, which are just references to the mesh database.
   tris.reserve(mesh->n_triangles);
-
+  for (size_t i = 0; i < mesh->vertices.size(); ++i) {
+          mesh->vertices[i] = (*obj_to_world)(mesh->vertices[i], false, false);
+      }
+  for (size_t i = 0; i < mesh->normals.size(); ++i) {
+        mesh->normals[i] = (*obj_to_world)(mesh->normals[i], true, true);
+        mesh->normals[i].mk_unit_vec(); 
+    }
+  auto id = std::make_shared<Transform>();
   for (int i = 0; i < mesh->n_triangles; ++i) {
-    tris.emplace_back(std::make_shared<Triangle>(flip, mesh, i, t, tinv, backface_cull));
+    tris.emplace_back(std::make_shared<Triangle>(flip, mesh, i, id, id, backface_cull));
   }
   return tris;
 }

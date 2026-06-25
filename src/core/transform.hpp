@@ -22,10 +22,10 @@ namespace rt {
             Transform inverse()   const;
             Transform transpose() const;
 
-            Transform translate(const Vec3& delta);
-            Transform rotate(const double& angle, const Vec3& delta);
-            Transform scale(const Vec3& scales);
-            Transform lookAt(const Vec3& look_from, const Vec3& vpn, const Vec3& vup);
+            static Transform translate(const Vec3& delta);
+            static Transform rotate(const double& angle, const Vec3& delta);
+            static Transform scale(const Vec3& scales);
+            static Transform lookAt(const Vec3& look_from, const Vec3& look_at, const Vec3& vup);
 
             void operator=(const Transform& t);
             Point4 operator()(const Point4& p,  bool isNormal=false) const;
@@ -34,13 +34,15 @@ namespace rt {
             Bounds3f operator()(const Bounds3f& b) const;
             Surfel operator()(const Surfel& s) const;
             Transform operator()(const Transform& t) const;
-
+            Transform operator*(const Transform& t) const;
+            
             Mat4 getTMat()    const {return this->t_matrix;};
             Mat3 getTMat3()   const {return Mat3
                                     (t_matrix(0, 0), t_matrix(0, 1), t_matrix(0, 2),
                                      t_matrix(1, 0), t_matrix(1, 1), t_matrix(1, 2),
                                      t_matrix(2, 0), t_matrix(2, 1), t_matrix(2, 2));}
             Mat4 getTMatInv() const {return this->t_matrix_inv;};
+
     };
 
 }; //< namespace rt

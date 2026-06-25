@@ -83,8 +83,8 @@ class GeometricPrimitive : public Primitive {
 private:
   std::shared_ptr<Shape> shape;
   std::shared_ptr<Material> material;
-
 public:
+  GeometricPrimitive() = default;
   GeometricPrimitive(std::shared_ptr<Shape> shape,
                      std::shared_ptr<Material> material);
 

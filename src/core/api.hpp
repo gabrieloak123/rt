@@ -2,11 +2,13 @@
 #define API_HPP
 
 #include <memory>
+#include <stack>
 #include <vector>
 #include <unordered_map>
 #include <string>
 
 
+#include "paramset.hpp"
 #include "parser.hpp"
 #include "common.hpp"
 
@@ -21,7 +23,20 @@ namespace rt {
   class Primitive;
   class Material;
   class Film;
+  class Transform;
+
   enum AggregateType { LIST = 0, BVH };
+
+
+  using DictOfMat = std::unordered_map< string, std::shared_ptr<Material> >;
+
+struct GraphicsState{
+  std::shared_ptr<Material> curr_material;  //!< Current material that globally affects all objects.
+	std::shared_ptr<DictOfMat> mats_lib;      //!< Library of materials.
+  bool flip_normals{false};                 //!< When true, we flip the normals
+	bool mats_lib_cloned{false};
+
+};
 
 struct RenderOptions {
   
@@ -34,8 +49,10 @@ struct RenderOptions {
   std::vector<std::shared_ptr<Light>> light_sources;
   std::vector<std::shared_ptr<Primitive>> elements;
   std::unordered_map<std::string, ParamSet> setup_params;
+  std::unordered_map<std::string, std::vector<std::shared_ptr<Primitive>>> obj_instances;
+  std::unordered_map<std::string, std::shared_ptr<Material>> material_memory;
 
-  std::map<std::string, std::shared_ptr<Material>> material_memory;
+  std::vector<std::shared_ptr<Primitive>>* curr_instance{nullptr};
   std::shared_ptr<Material> current_material;
 
 };
@@ -55,6 +72,14 @@ public:
   static APIState m_api_state;
   // Stores the CLI options that the
   static RunningOptions m_run_options;
+
+  static Transform curr_TM;
+
+  static std::unordered_map<std::string, Transform> named_coord_sys;
+  static GraphicsState curr_GS;
+  static std::stack<GraphicsState> saved_GS;
+  static std::stack<Transform> saved_TM;
+  static std::unordered_map<std::string, std::shared_ptr<const Transform>> transformation_cache;
 
   // setup the ray tracer
   static void init_engine(const RunningOptions &opt);
@@ -80,6 +105,18 @@ public:
   static void light_source(const ParamSet& ps);
   static void aggregator(const ParamSet& ps);
 
+  static void translate(const ParamSet &ps);
+  static void scale(const ParamSet &ps);
+  static void rotate(const ParamSet &ps);
+  static void push_CTM(const ParamSet &ps);
+  static void pop_CTM(const ParamSet &ps);
+  static void push_GS(const ParamSet &ps);
+  static void pop_GS(const ParamSet &ps);
+
+  static void obj_instance_begin(const ParamSet& ps);
+  static void obj_instance_call(const ParamSet& ps);
+  static void obj_instance_end(const ParamSet& ps);
+  
 
   // Methods that create the objects based on paramset's data
   static std::unique_ptr<Camera> make_camera(const ParamSet &camera,
