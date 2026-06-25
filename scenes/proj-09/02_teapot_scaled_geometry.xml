@@ -19,7 +19,7 @@
         <object type="trianglemesh"
             ntriangles ="2"
             indices ="0 1 2 0 2 3"
-            vertices ="-40 0 30  40 0 30  40 0 -30  -40 0 -30"
+            vertices ="-40 0 30  40 0 30  40 0 -30 -40 0 -30"
             normals ="0 1 0  0 1 0  0 1 0  0 1 0 "
             reverse_vertex_order="false"
             backface_cull ="true"/>
