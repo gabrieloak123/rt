@@ -27,6 +27,7 @@ namespace rt {
     bool TransformedPrimitive::intersect(const Ray &r, Surfel *sf) const
     {
         Ray ray = (*world_to_obj)(r);
+        
         if(!primitive->intersect(ray, sf))
             return false;
 

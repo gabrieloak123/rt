@@ -433,7 +433,7 @@ void API::object(const ParamSet &ps) {
   auto t = std::make_shared<Transform>(curr_TM);
   auto t1 = std::make_shared<Transform>(curr_TM.inverse());
   auto primitive = std::make_shared<GeometricPrimitive>();
-
+  std::shared_ptr<Primitive> aggregate;
   if (type == "unknown") {
     ERROR("API::object(): Missing \"type\" specification for the object.");
   }
@@ -445,27 +445,26 @@ void API::object(const ParamSet &ps) {
     auto center = ps.retrieve<Point3>("center", {0, 0, 0});
     auto sphere = std::make_shared<Sphere>(flip, center, radius, t, t1);
     primitive = std::make_shared<GeometricPrimitive>(sphere, m_render_options->current_material);
-
+    auto pr = std::make_shared<TransformedPrimitive>(primitive, t, t1);
     if(m_render_options->curr_instance)
-       m_render_options->curr_instance->push_back(primitive);
+       m_render_options->curr_instance->push_back(pr);
     else
-      m_render_options->elements.push_back(primitive);
+       m_render_options->elements.push_back(pr);
   } 
   
   else if (type == "triangle") {} 
   else if (type == "trianglemesh"){  
-    auto triangles = rt::create_triangle_mesh_shape(flip,t, t1, ps);
-    
-    for(const auto& shape : triangles){
-      auto pr = std::make_shared<GeometricPrimitive>(shape, m_render_options->current_material);
-      
+
+    auto triangles = rt::create_triangle_mesh_shape(flip, t, t1, ps);
+    std::vector<std::shared_ptr<Primitive>> local_mesh_prims;
+    for(const auto& shape : triangles) {
+      auto primitive = std::make_shared<GeometricPrimitive>(shape, m_render_options->current_material);
+      auto pr = std::make_shared<TransformedPrimitive>(primitive, t, t1);
       if(m_render_options->curr_instance)
        m_render_options->curr_instance->push_back(pr);
       else
        m_render_options->elements.push_back(pr);
     }
-    std::cout << ">>> " << triangles.size() << " triângulos carregados e adicionados à cena!\n";
-
   } 
   else if (type == "plane") {
     Point3 p = ps.retrieve<Point3>("point", Point3(0, 0, 0));
@@ -473,11 +472,11 @@ void API::object(const ParamSet &ps) {
 
     auto plane = std::make_shared<Plane>(flip, p, n, t, t1);
     primitive = std::make_shared<GeometricPrimitive>(plane, m_render_options->current_material);
-
+    auto pr = std::make_shared<TransformedPrimitive>(primitive, t, t1);
     if(m_render_options->curr_instance)
-       m_render_options->curr_instance->push_back(primitive);
+       m_render_options->curr_instance->push_back(pr);
     else
-      m_render_options->elements.push_back(primitive);
+       m_render_options->elements.push_back(pr);
 
   } else
     ERROR("API::object(): Missing \"type\" specification for the object.");
@@ -567,7 +566,7 @@ void API::obj_instance_begin(const ParamSet& ps)
   curr_TM = Transform();
 
   m_render_options->obj_instances[name] = std::vector<std::shared_ptr<Primitive>>();
-  m_render_options->curr_instance = &m_render_options->obj_instances[name];
+    m_render_options->curr_instance = &m_render_options->obj_instances[name];
 }
 
 void API::obj_instance_call(const ParamSet& ps)
@@ -578,19 +577,28 @@ void API::obj_instance_call(const ParamSet& ps)
   {
     ERROR("Error: Instance not Found: " + name + "!\n");
   }
-
+  
   const std::shared_ptr<Transform> obj_to_world = std::make_shared<Transform>(curr_TM);
   const std::shared_ptr<Transform> world_to_obj = std::make_shared<Transform>(curr_TM.inverse());
+  std::vector<std::shared_ptr<Primitive>> instance_prims_copy = it->second;
   std::shared_ptr<Primitive> aggregate;
-  auto prims = ps.retrieve<int>("max_prims_per_node", 4);
   if (m_render_options->aggregator == AggregateType::BVH) {
-         aggregate = std::make_shared<BVHAccel>(it->second, prims); 
+         aggregate = std::make_shared<BVHAccel>(instance_prims_copy, 4); 
   } else {  
-      aggregate = std::make_shared<PrimitiveList>(it->second);
+      aggregate = std::make_shared<PrimitiveList>(instance_prims_copy);
   }
 
   auto trans_prim = std::make_shared<TransformedPrimitive>(aggregate, obj_to_world, world_to_obj);
-  m_render_options->elements.push_back(trans_prim);
+  if (m_render_options->curr_instance) {
+      m_render_options->curr_instance->push_back(trans_prim);
+  } else {
+      m_render_options->elements.push_back(trans_prim);
+  }
+}
+
+void API::identity(const ParamSet &ps)
+{
+  curr_TM = Transform();
 }
 void API::translate(const ParamSet &ps)
 {

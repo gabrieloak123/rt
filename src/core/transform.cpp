@@ -53,6 +53,7 @@ namespace rt{
         Point3 o = (*this)(r.getOrigin(), false, false, &err);
         Vec3 d = (*this)(r.getDirection(), true, false);  
         double lengthSqr = d.sqr_length();
+        double tMin = r.getTMin();
         double tMax = r.getTMax();
 
         if (lengthSqr > 0) {
@@ -62,7 +63,7 @@ namespace rt{
             tMax -= dt;
         }
 
-        return Ray(o, d, r.getTMin(), tMax);
+        return Ray(o, d, tMin, tMax);
     }
     Bounds3f Transform::operator()(const Bounds3f& b) const {
         const Transform &M = *this;

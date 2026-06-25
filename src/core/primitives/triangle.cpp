@@ -92,7 +92,6 @@ namespace rt {
         sf->n = -sf->n;
       }
 
-      *sf = (*obj_to_world)(*sf);
     }
     
 
@@ -166,8 +165,6 @@ namespace rt {
     );
 
 	  box = Bounds3f(p_min, p_max);
-
-    box = (*obj_to_world)(box);
     return true;
 }
 
@@ -508,16 +505,8 @@ std::vector<std::shared_ptr<Shape>> create_triangle_mesh(const std::shared_ptr<T
   std::vector<std::shared_ptr<Shape>> tris;
   // Create the triangles, which are just references to the mesh database.
   tris.reserve(mesh->n_triangles);
-  for (size_t i = 0; i < mesh->vertices.size(); ++i) {
-          mesh->vertices[i] = (*obj_to_world)(mesh->vertices[i], false, false);
-      }
-  for (size_t i = 0; i < mesh->normals.size(); ++i) {
-        mesh->normals[i] = (*obj_to_world)(mesh->normals[i], true, true);
-        mesh->normals[i].mk_unit_vec(); 
-    }
-  auto id = std::make_shared<Transform>();
   for (int i = 0; i < mesh->n_triangles; ++i) {
-    tris.emplace_back(std::make_shared<Triangle>(flip, mesh, i, id, id, backface_cull));
+    tris.emplace_back(std::make_shared<Triangle>(flip, mesh, i, obj_to_world, world_to_obj, backface_cull));
   }
   return tris;
 }

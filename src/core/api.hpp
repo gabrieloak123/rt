@@ -105,6 +105,7 @@ public:
   static void light_source(const ParamSet& ps);
   static void aggregator(const ParamSet& ps);
 
+  static void identity(const ParamSet &ps);
   static void translate(const ParamSet &ps);
   static void scale(const ParamSet &ps);
   static void rotate(const ParamSet &ps);

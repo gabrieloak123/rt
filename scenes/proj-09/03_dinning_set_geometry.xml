@@ -11,7 +11,7 @@
         <make_named_material type="blinn" name="gold" diffuse ="1.0 0.65 0.0"  specular ="0.8 0.6 0.2" mirror ="0.4 0.4 0.4" glossiness ="512"/>
 
         <named_material name="gold"/>
-        <object type="trianglemesh" material="gold" ntriangles ="2" indices ="0 1 2 0 2 3"
+        <object type="trianglemesh" ntriangles ="2" indices ="0 1 2 0 2 3"
             vertices ="-40 0 30  40 0 30  40 0 -30  -40 0 -30"
             normals ="0 1 0  0 1 0  0 1 0  0 1 0 "
             reverse_vertex_order="false"

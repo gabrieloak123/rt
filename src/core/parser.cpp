@@ -439,6 +439,10 @@ std::unordered_map<string, vector<string>> tag_catalog{
         "value",
       }
     },
+    {
+      "identity",
+      {""}
+    },
     {"rotate", 
       {
         "angle",
@@ -475,6 +479,7 @@ std::unordered_map<string, std::function<void(const ParamSet &)>> api_functions
     {"named_material", API::named_material}, {"light_source", API::light_source},
     {"aggregator", API::aggregator}, {"translate", API::translate},
     {"rotate", API::rotate}, {"scale", API::scale},
+    {"identity", API::identity},
     {"object_instance_begin", API::obj_instance_begin},
     {"object_instance_end", API::obj_instance_end},
     {"object_instance_call", API::obj_instance_call},
