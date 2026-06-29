@@ -3,6 +3,8 @@
 #include "visibilityTester.hpp"
 
 namespace rt{
+    AmbientLight::AmbientLight(RGBColor intensity, RGBColor scale) :
+                            Light(intensity, scale) {flag = light_flag_e::ambient;};
 
     RGBColor AmbientLight::sample_Li( const Surfel& hit, Vec3* wi, VisibilityTester* vis ){
         *wi = {0, 0, 0};

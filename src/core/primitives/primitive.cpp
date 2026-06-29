@@ -5,6 +5,13 @@
 
 namespace rt {
 
+  PrimitiveList::PrimitiveList(std::vector<std::shared_ptr<Primitive>> prim)
+      : primitives(prim) {}
+
+  GeometricPrimitive::GeometricPrimitive(std::shared_ptr<Shape> shape,
+                     std::shared_ptr<Material> material)
+      : shape(shape), material(material) {};
+
 const std::shared_ptr<Material> AggregatePrimitive::get_material() const {
   WARNING("AggregatePrimitive must not have a material");
   return nullptr;
@@ -54,4 +61,7 @@ bool GeometricPrimitive::intersect_p(const Ray &r) const {
   return shape->intersect_p(r);
 }
 
+bool GeometricPrimitive::box(Bounds3f &box) const { return shape->box(box);};
+
+void GeometricPrimitive::set_material(const std::shared_ptr<Material> &m) { material = m; };
 } // namespace rt

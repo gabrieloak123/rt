@@ -11,8 +11,8 @@ private:
   double radius{0};
 
 public:
-  Sphere(bool flip, Point3 center, float radius)
-        : Shape(flip), center(center), radius(radius) {};
+  Sphere(bool flip, Point3 center, float radius, const std::shared_ptr<Transform>& t, const std::shared_ptr<Transform>& tinv )
+        : Shape(flip, t, tinv), center(center), radius(radius) {};
 
   bool intersect(const Ray &r, float *t_hit, Surfel *sf) const override;
   bool intersect_p(const Ray &r) const override;

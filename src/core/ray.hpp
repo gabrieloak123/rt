@@ -7,7 +7,7 @@
 
 using Point3 = vec3<double>;
 using Vector3 = vec3<double>;
-
+namespace rt{
 class Ray {
 private:
   Point3 origin{};
@@ -18,8 +18,7 @@ private:
 public:
   Ray() : t_min(0.0), t_max(INFINITY) {};
 
-  Ray(const Point3& o, const Vector3& dir, double t_min = 0.0, double t_max = INFINITY)
-      : origin(o), direction(dir), t_min(t_min), t_max(t_max) {};
+  Ray(const Point3& o, const Vector3& dir, double t_min = 0.0, double t_max = INFINITY);
 
   void normalize() { direction.mk_unit_vec(); };
 
@@ -43,5 +42,5 @@ inline std::ostream &operator<<(std::ostream &os, const Ray &ray) {
             << ray.origin.z() << "), d=(" << ray.direction.x() << ","
             << ray.direction.y() << "," << ray.direction.z()
             << "), tmin: " << ray.t_min << ", tmax: " << ray.t_max << "]";
-}
+}}
 #endif

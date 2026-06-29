@@ -1,10 +1,27 @@
 #include <chrono>
+#include <filesystem>
 #include <iomanip>
 #include <memory>
 #include <sstream>
 #include <utility>
 
 #include "api.hpp"
+#include <memory>
+#include <unordered_map>
+
+
+#include "paramset.hpp"
+#include "primitive.hpp"
+#include "scenes.hpp"
+#include "background.hpp"
+#include "error.hpp"
+#include "film.hpp"
+#include "parser.hpp"
+
+#include "include_integrator.hpp"
+#include "light/include_lights.hpp"
+#include "include_primitive.hpp"
+#include "include_material.hpp"
 #include "bvh_accel.hpp"
 #include "common.hpp"
 #include "sphere.hpp"
@@ -13,6 +30,8 @@
 #include "scenes.hpp"
 #include "toonIntegrator.hpp"
 #include "toon_material.hpp"
+#include "transPrimitive.hpp"
+#include "transform.hpp"
 #include "triangle.hpp"
 
 
@@ -25,6 +44,12 @@ API::APIState API::m_api_state = API::Uninitialized;
 // @author = Selan Santos
 // ===
 RunningOptions API::m_run_options;
+Transform API::curr_TM;
+GraphicsState API::curr_GS;
+std::stack<GraphicsState> API::saved_GS;
+std::stack<Transform> API::saved_TM;
+std::unordered_map<std::string, Transform> API::named_coord_sys;
+std::unordered_map<std::string, std::shared_ptr<const Transform>> API::transformation_cache;
 
 void API::init_engine(const RunningOptions &opt) {
   m_run_options = opt;
@@ -32,7 +57,6 @@ void API::init_engine(const RunningOptions &opt) {
   if (m_api_state != API::Uninitialized) {
     ERROR("API::init_engine() has already been called! ");
   }
-
   m_api_state = API::Setup;
   m_render_options = std::make_unique<RenderOptions>();
   // m_current_gs = GraphicsState();
@@ -40,7 +64,12 @@ void API::init_engine(const RunningOptions &opt) {
 }
 
 // frees all the resources previously allocated
-void API::clean_up() {}
+void API::clean_up() {
+  curr_TM = Transform();
+  curr_GS = GraphicsState();  
+  while(!saved_TM.empty()) saved_TM.pop();
+  while(!saved_GS.empty()) saved_GS.pop();
+}
 
 /// Check whether the current state has been intialized.
 bool API::check_in_initialized_state(std::string_view func_name) {
@@ -88,7 +117,19 @@ void API::world_begin(const ParamSet &ps) {
 /// Erase temporary engine states so that we may render another scene with the
 /// same configuration.
 void API::hard_engine_reset() {
-  /// TODO
+  if (m_render_options) {
+      m_render_options->elements.clear();
+      m_render_options->light_sources.clear();
+  }
+  
+  curr_TM = Transform();
+  curr_GS = GraphicsState();
+  
+  while(!saved_TM.empty()) saved_TM.pop();
+  while(!saved_GS.empty()) saved_GS.pop();
+  
+  named_coord_sys.clear();
+  transformation_cache.clear();
 }
 
 void API::light_source(const ParamSet &ps) {
@@ -247,6 +288,7 @@ void API::world_end(const ParamSet &ps) {
   // instantiated somewhere else.
 
   auto primitive_list = std::make_shared<PrimitiveList>();
+  Transform t;
   for (auto &obj : m_render_options->elements) {
     primitive_list->add(obj);
   }
@@ -259,9 +301,10 @@ void API::world_end(const ParamSet &ps) {
 		break;
 	  case BVH:
     	auto prims = ps.retrieve<int>("max_prims_per_node", 4);
-		auto bvh = std::make_shared<BVHAccel>(primitive_list->get_primitives(), prims);
-		bvh->print();
-		scene = std::make_unique<Scene>(bvh, m_render_options->background, m_render_options->light_sources);
+      m_render_options->num_prims = prims;
+		  auto bvh = std::make_shared<BVHAccel>(primitive_list->get_primitives(), prims);
+	  	// bvh->print();
+	  	scene = std::make_unique<Scene>(bvh, m_render_options->background, m_render_options->light_sources);
 		break;
   }
 
@@ -312,6 +355,7 @@ void API::world_end(const ParamSet &ps) {
   // [4] Basic clean up, preparing for new rendering, in case we have
   // several scene setup + world in a single input scene file.
   m_api_state = API::Setup; // correct machine state.
+  clean_up();
 }
 
 void API::camera(const ParamSet &ps) {
@@ -355,10 +399,15 @@ void API::material(const ParamSet &ps) {
         std::shared_ptr<Material>(new FlatMaterial(color));
   } else if (type == "blinn") {
     auto color_type = ps.retrieve<std::string>("color_type", "spectre");
-    RGBColor ambient(ps.retrieve<RGBColor>("ambient", {0, 0, 0}), color_type);
-    RGBColor diffuse(ps.retrieve<RGBColor>("diffuse", {0, 0, 0}), color_type);
-    RGBColor specular(ps.retrieve<RGBColor>("specular", {0, 0, 0}), color_type);
-    RGBColor mirror(ps.retrieve<Vec3>("mirror", {0, 0, 0}), color_type);
+   auto ambient =
+        RGBColor(ps.retrieve<Vec3>("ambient", {0, 0, 0}), color_type);
+    auto diffuse =
+        RGBColor(ps.retrieve<Vec3>("diffuse", {0, 0, 0}), color_type);
+    auto specular =
+        RGBColor(ps.retrieve<Vec3>("specular", {0, 0, 0}), color_type);
+    auto mirror =
+        RGBColor(ps.retrieve<Vec3>("mirror", {0, 0, 0}), color_type);
+
     auto glossiness = ps.retrieve<double>("glossiness", 0.0f);
     
     m_render_options->current_material = std::make_shared<BlinnPhongMaterial>(
@@ -382,6 +431,11 @@ void API::object(const ParamSet &ps) {
   check_in_world_block_state("API::object");
   auto type = ps.retrieve<std::string>("type", "unknown");
   bool flip = ps.retrieve<bool>("flip", false);
+  auto t = std::make_shared<Transform>(curr_TM);
+  auto t1 = std::make_shared<Transform>(curr_TM.inverse());
+  auto primitive = std::make_shared<GeometricPrimitive>();
+
+  std::shared_ptr<Primitive> aggregate;
   if (type == "unknown") {
     ERROR("API::object(): Missing \"type\" specification for the object.");
   }
@@ -391,29 +445,49 @@ void API::object(const ParamSet &ps) {
       ERROR("API::object(): Missing \"radius\" specification for the sphere.");
     }
     auto center = ps.retrieve<Point3>("center", {0, 0, 0});
-    auto sphere = std::make_shared<Sphere>(flip, center, radius);
-    m_render_options->elements.push_back(std::make_shared<GeometricPrimitive>(sphere, m_render_options->current_material));
-  } else if (type == "triangle") {
-    // Point3 p0 = ps.retrieve<Point3>("p0", Point3(-1, 0, 0));
-    // Point3 p1 = ps.retrieve<Point3>("p1", Point3(1, 0, 0));
-    // Point3 p2 = ps.retrieve<Point3>("p2", Point3(0, 1, 0));
-    // auto triangle = std::make_shared<Triangle>(
-    //    flip, p0, p1, p2);
-    // m_render_options->elements.push_back(std::make_shared<GeometricPrimitive>(triangle, m_render_options->current_material));
-  } else if (type == "trianglemesh"){
-    auto triangles = rt::create_triangle_mesh_shape(flip, ps);
-    for(const auto& shape : triangles){
-      auto primitive = std::make_shared<GeometricPrimitive>(shape, m_render_options->current_material);
-      m_render_options->elements.push_back(primitive);
-    }
-    std::cout << ">>> " << triangles.size() << " triângulos carregados e adicionados à cena!\n";
+    auto sphere = std::make_shared<Sphere>(flip, center, radius, t, t1);
+    primitive = std::make_shared<GeometricPrimitive>(sphere, m_render_options->current_material);
+    auto pr = std::make_shared<TransformedPrimitive>(primitive, t, t1);
+    if(m_render_options->curr_instance)
+       m_render_options->curr_instance->push_back(pr);
+    else
+       m_render_options->elements.push_back(pr);
+  } 
+  
+  else if (type == "triangle") {} 
+  else if (type == "trianglemesh") {  
 
-  } else if (type == "plane") {
+    auto triangles = rt::create_triangle_mesh_shape(flip, t, t1, ps);
+    
+    std::vector<std::shared_ptr<Primitive>> mesh_primitives;
+    mesh_primitives.reserve(triangles.size());
+
+    for(const auto& shape : triangles) {
+        auto primitive = std::make_shared<GeometricPrimitive>(shape, m_render_options->current_material);
+        mesh_primitives.push_back(primitive);
+    }
+
+    auto mesh_aggregate = std::make_shared<BVHAccel>(mesh_primitives, m_render_options->num_prims); 
+    
+    auto trans_mesh = std::make_shared<TransformedPrimitive>(mesh_aggregate, t, t1);
+
+    if(m_render_options->curr_instance)
+        m_render_options->curr_instance->push_back(trans_mesh);
+    else
+        m_render_options->elements.push_back(trans_mesh);
+}
+  else if (type == "plane") {
     Point3 p = ps.retrieve<Point3>("point", Point3(0, 0, 0));
     Vec3 n = ps.retrieve<Vec3>("normal", Vec3(0, 1, 0));
 
-    auto plane = std::make_shared<Plane>(flip, p, n);
-    m_render_options->elements.push_back(std::make_shared<GeometricPrimitive>(plane, m_render_options->current_material));
+    auto plane = std::make_shared<Plane>(flip, p, n, t, t1);
+    primitive = std::make_shared<GeometricPrimitive>(plane, m_render_options->current_material);
+    auto pr = std::make_shared<TransformedPrimitive>(primitive, t, t1);
+    if(m_render_options->curr_instance)
+       m_render_options->curr_instance->push_back(pr);
+    else
+       m_render_options->elements.push_back(pr);
+
   } else
     ERROR("API::object(): Missing \"type\" specification for the object.");
 }
@@ -493,22 +567,106 @@ void API::named_material(const ParamSet &ps) {
   }
 }
 
+void API::obj_instance_begin(const ParamSet& ps)
+{
+  auto name = ps.retrieve<std::string>("name", "");
+  
+  push_GS(ps);
+
+  curr_TM = Transform();
+
+  m_render_options->obj_instances[name] = std::vector<std::shared_ptr<Primitive>>();
+    m_render_options->curr_instance = &m_render_options->obj_instances[name];
+}
+
+void API::obj_instance_call(const ParamSet& ps)
+{
+  auto name = ps.retrieve<std::string>("name");
+  auto it = m_render_options->obj_instances.find(name);
+  if(it == m_render_options->obj_instances.end())
+  {
+    ERROR("Error: Instance not Found: " + name + "!\n");
+  }
+  
+  const std::shared_ptr<Transform> obj_to_world = std::make_shared<Transform>(curr_TM);
+  const std::shared_ptr<Transform> world_to_obj = std::make_shared<Transform>(curr_TM.inverse());
+  std::vector<std::shared_ptr<Primitive>> instance_prims_copy = it->second;
+  std::shared_ptr<Primitive> aggregate;
+  if (m_render_options->aggregator == AggregateType::BVH) {
+         aggregate = std::make_shared<BVHAccel>(instance_prims_copy, m_render_options->num_prims); 
+  } else {  
+      aggregate = std::make_shared<PrimitiveList>(instance_prims_copy);
+  }
+
+  auto trans_prim = std::make_shared<TransformedPrimitive>(aggregate, obj_to_world, world_to_obj);
+  if (m_render_options->curr_instance) {
+      m_render_options->curr_instance->push_back(trans_prim);
+  } else {
+      m_render_options->elements.push_back(trans_prim);
+  }
+}
+
+void API::identity(const ParamSet &ps)
+{
+  curr_TM = Transform();
+}
+void API::translate(const ParamSet &ps)
+{
+  auto delta = ps.retrieve<Vec3>("value", {0, 0, 0});
+  curr_TM = curr_TM * Transform::translate(delta);
+}
+
+void API::scale(const ParamSet &ps)
+{
+  auto delta = ps.retrieve<Vec3>("value", {1, 1, 1});
+  curr_TM = curr_TM * Transform::scale(delta);
+}
+void API::rotate(const ParamSet &ps)
+{ 
+  auto degrees = ps.retrieve<double>("angle", 0.0);
+  auto axis = ps.retrieve<Point3>("axis", {0, 0, 0});
+  curr_TM = curr_TM * Transform::rotate(degrees, axis);
+}
+
+void API::push_CTM(const ParamSet&)
+{
+  saved_TM.push(curr_TM);
+}
+
+void API::pop_CTM(const ParamSet&)
+{
+  if(!saved_TM.empty()) 
+  {
+      curr_TM = saved_TM.top();
+      saved_TM.pop();
+  }
+}
+void API::push_GS(const ParamSet&)
+{
+  saved_GS.push(curr_GS);
+  saved_TM.push(curr_TM);
+}
+void API::pop_GS(const ParamSet&)
+{
+  if(!saved_GS.empty()) 
+  {
+    curr_GS = saved_GS.top();
+    saved_GS.pop();
+
+  }
+  if(!saved_TM.empty())
+  {
+    curr_TM = saved_TM.top();
+    saved_TM.pop();
+  }
+}
+void API::obj_instance_end(const ParamSet& ps)
+{
+  pop_GS(ps);
+  m_render_options->curr_instance = nullptr;
+}
+
 void API::render() {
-  // Perform objects initialization here.
-  // -------------------------------------------------------------
-  // The Film object holds the memory for the image.
-
-  // m_render_options->integrator =
-  // make_integrator(m_render_options->setup_params["integrator"]);
-
-  // auto primitive_list = std::make_shared<PrimitiveList>();
-  // for(auto& obj : m_render_options->elements){
-  //   primitive_list->add(obj);
-  // }
-
-  // m_render_options->scene = std::make_unique<Scene>(primitive_list,
-  // m_render_options->background, m_render_options->light_sources);
-
   if (m_render_options->integrator && m_render_options->scene) {
     m_render_options->integrator->render(*m_render_options->scene);
   }

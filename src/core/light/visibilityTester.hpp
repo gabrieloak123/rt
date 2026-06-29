@@ -1,18 +1,13 @@
 #ifndef VISIBILITY_TESTER_HPP
 #define VISIBILITY_TESTER_HPP
 
-
-#ifndef SCENES_HPP
-    namespace rt{
-        class VisibilityTester;
-    }
-    #include "scenes.hpp"
-#endif  //< SCENES_HPP
-
+#include "common.hpp"
 #include "surfel.hpp"
 
 namespace rt{
 
+    class Scene;
+    
     class VisibilityTester {
         private:
             Surfel p0, p1;    //< Test visibility between p0 and p1.

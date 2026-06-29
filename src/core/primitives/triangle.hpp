@@ -8,6 +8,7 @@
 #include <memory>
 #include <ostream>
 #include "chrono"
+#include "transform.hpp"
 namespace rt {
 
     struct TriangleMesh {
@@ -28,7 +29,6 @@ namespace rt {
         TriangleMesh& operator=(const TriangleMesh&) = delete;
         TriangleMesh(TriangleMesh&& other) = delete;
 
-
     };
 
     class Triangle : public Shape {
@@ -41,8 +41,8 @@ namespace rt {
             std::shared_ptr<TriangleMesh> mesh;
         public:
             
-            Triangle(bool flip, const std::shared_ptr<TriangleMesh>& mesh, int tri_id, bool bfc = true)
-                :Shape(flip), backface_cull{ bfc }, mesh{ mesh } {
+            Triangle(bool flip, const std::shared_ptr<TriangleMesh>& mesh, int tri_id,  const std::shared_ptr<Transform>& t, const std::shared_ptr<Transform>& tinv, bool bfc = true)
+                :Shape(flip, t, tinv), backface_cull{ bfc }, mesh{ mesh } {
      
                 v = &mesh->vertex_indices[3 * tri_id];
                 n = &mesh->normal_indices[3 * tri_id];
@@ -55,8 +55,8 @@ namespace rt {
             friend std::ostream& operator<<(std::ostream& os, const Triangle& t);
     };
 
-    std::vector<std::shared_ptr<Shape>> create_triangle_mesh_shape(bool flip_normals, const ParamSet& ps);
-    std::vector<std::shared_ptr<Shape>> create_triangle_mesh(const std::shared_ptr<TriangleMesh>&, const bool&, const bool&);
+    std::vector<std::shared_ptr<Shape>> create_triangle_mesh_shape(bool flip_normals, std::shared_ptr<Transform> t, std::shared_ptr<Transform> tinv, const ParamSet& ps);
+    std::vector<std::shared_ptr<Shape>> create_triangle_mesh(const std::shared_ptr<TriangleMesh>&, const std::shared_ptr<Transform>&, const std::shared_ptr<Transform>&, const bool&, const bool&);
 
     bool load_mesh_data(const std::string& filename,
                     bool rvo,

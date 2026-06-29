@@ -8,8 +8,7 @@ namespace rt{
             std::vector<double> mapping_interval;
             int n_intervals;
         public:
-            ToonIntegrator(std::shared_ptr<Camera> cam, std::vector<double> mapping_interval, int n_intervals, int max_depth) 
-                          : SamplerIntegrator(cam, max_depth), mapping_interval(mapping_interval), n_intervals(n_intervals){};
+            ToonIntegrator(std::shared_ptr<Camera> cam, std::vector<double> mapping_interval, int n_intervals, int max_depth);
             std::optional<RGBColor> Li(const Ray& ray, const Scene& scene, const int& depth) const override;
     };
 

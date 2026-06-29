@@ -5,6 +5,7 @@
 namespace rt{
 
 bool Sphere::intersect(const Ray &r, float *t_hit, Surfel *sf) const {
+
   Point3 oc = r.getOrigin() - center;
   Vec3 v = r.getDirection();
 
@@ -53,7 +54,8 @@ bool Sphere::intersect(const Ray &r, float *t_hit, Surfel *sf) const {
 
 bool Sphere::box(Bounds3f &box) const {
 	Vec3 r_vec =Vec3(radius, radius, radius);
-	box = Bounds3f(center - r_vec, center + r_vec);
+  auto tempc = (*obj_to_world)(center);
+	box = Bounds3f(tempc - r_vec, tempc + r_vec);
 	return true;
 };
 

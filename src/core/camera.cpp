@@ -1,12 +1,12 @@
 #include "camera.hpp"
 #include "error.hpp"
 #include "film.hpp"
+#include "transform.hpp"
 #include <cmath>
 
 namespace rt {
 
-OrthographicCamera::OrthographicCamera(const Point3 look_from, const Point3 look_at,
-                                       const Vec3 vup, double l, double r,
+OrthographicCamera::OrthographicCamera(const Point3 look_from, const Point3 look_at, const Transform& trans, double l, double r,
                                        double b, double t, int nx, int ny,
                                        double focal_dist) {
   m_origin = look_from;
@@ -17,22 +17,7 @@ OrthographicCamera::OrthographicCamera(const Point3 look_from, const Point3 look
   m_gaze_dir = gaze;
   m_gaze_dir.mk_unit_vec();
 
-  Vec3 w{look_from - look_at}; //< Create the W axis aligned with gaze.
-  w.mk_unit_vec();
-
-  Vec3 u = - cross(vup, w); //< Create the U axis perpendicular to the vup and W.
-  u.mk_unit_vec();
-
-  Vec3 v = cross(w, u); //< Create the V axis perpendicular to W and U .
-  v.mk_unit_vec();
-
-  m_camera_to_world =
-      Mat4( //< Creates the transformation matrix responsible for the linear
-            // transformation from camera to image.
-          u[0], v[0], w[0], look_from[0], 
-          u[1], v[1], w[1], look_from[1], 
-          u[2], v[2], w[2], look_from[2], 
-          0.0,  0.0,  0.0,          1.0);
+  m_camera_to_world = trans.getTMat();
 
   double width{r - l}, height{t - b}; //< Screen limits
 
@@ -46,7 +31,7 @@ OrthographicCamera::OrthographicCamera(const Point3 look_from, const Point3 look
 }
 
 PerspectiveCamera::PerspectiveCamera(Point3 look_from, const Point3 look_at,
-                                     const Vec3 vup, Vec3 vpn, int nx, int ny,
+                                     const Transform& trans, int nx, int ny,
                                      double fovy, double focal_dist) {
   m_origin = look_from;
   m_focal_distance = focal_dist;
@@ -57,22 +42,7 @@ PerspectiveCamera::PerspectiveCamera(Point3 look_from, const Point3 look_at,
   m_gaze_dir = gaze;
   m_gaze_dir.mk_unit_vec();
 
-  Vec3 w{vpn}; //< Create the W axis aligned with vpn.
-  w.mk_unit_vec();
-
-  Vec3 u = -cross(vup, w); //< Create the U axis perpendicular to the vup and W.
-  u.mk_unit_vec();
-
-  Vec3 v = cross(w, u); //< Create the V axis perpendicular to W and U .
-  v.mk_unit_vec();
-
-  m_camera_to_world =
-      Mat4( //< Creates the transformation matrix responsible for the linear
-            // transformation from camera to image.
-          u[0], v[0], w[0], look_from[0], 
-          u[1], v[1], w[1], look_from[1], 
-          u[2], v[2], w[2], look_from[2], 
-          0.0, 0.0, 0.0,            1.0);
+  m_camera_to_world = trans.getTMat();
 
   double aspect_ratio = static_cast<double>(nx)/static_cast<double>(ny);
 
@@ -143,9 +113,7 @@ std::unique_ptr<Camera> Camera::create_camera(const ParamSet &camera,
   //==[1] Retrieve lookat tag.
   auto lookfrom{look_at.retrieve<Point3>("look_from", Vec3(0, 0, 0))};
   auto lookat{look_at.retrieve<Point3>("look_at", Vec3(0, 0, -1))};
-
-  auto up{look_at.retrieve<Point3>("up", Vec3(0, 1, 0))};
-
+  auto vup{look_at.retrieve<Point3>("up", Vec3(0, 1, 0))};
   auto camera_type{camera.retrieve<string>("type", "orthographic")};
 
   //==[2] Retrieve orthographic data.
@@ -162,9 +130,10 @@ std::unique_ptr<Camera> Camera::create_camera(const ParamSet &camera,
     std::cout << "    - screen_window: " << sw << "\n";
     std::cout << "================================================\n";
 #endif
+    auto t = Transform::lookAt(lookfrom, lookat , vup);
 
     return std::make_unique<OrthographicCamera>(
-        lookfrom, lookat, up, sw[0], sw[1],
+        lookfrom, lookat, t, sw[0], sw[1],
         sw[2], sw[3], x, y, 1.0);
   } else if (camera_type == "perspective") {
     //==[3] Retrieve perspective data.
@@ -180,11 +149,10 @@ std::unique_ptr<Camera> Camera::create_camera(const ParamSet &camera,
     std::cout << "================================================\n";
 #endif
 
-	Vec3 vpn = lookfrom - lookat;
-	vpn.mk_unit_vec();
+  auto t = Transform::lookAt(lookfrom, lookat , vup);
 
     return std::make_unique<PerspectiveCamera>(
-        lookfrom, lookat, up, vpn, x, y, fovy);
+        lookfrom, lookat, t, x, y, fovy);
   }
   WARNING("Nullptr");
   return nullptr;

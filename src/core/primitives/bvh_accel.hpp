@@ -15,7 +15,7 @@ struct BVHNode {
 
   std::vector<std::shared_ptr<Primitive>> primitives;
 
-  bool is_leaf() const { return left == nullptr && right == nullptr; }
+  bool is_leaf() const;
 };
 
 class BVHAccel : public AggregatePrimitive {
@@ -31,11 +31,7 @@ private:
 
 
 public:
-  BVHAccel(const std::vector<std::shared_ptr<Primitive>> &prims, int n_prims) {
-    auto dummy = prims;
-	max_prims_per_node = n_prims;
-    root = create_bvh(dummy);
-  }
+  BVHAccel(const std::vector<std::shared_ptr<Primitive>> &prims, int n_prims);
 
   bool intersect(const Ray &ray, Surfel *isect) const;
 

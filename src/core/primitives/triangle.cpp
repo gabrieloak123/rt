@@ -1,4 +1,5 @@
 #include "triangle.hpp"
+#include "transform.hpp"
 #include <cstddef>
 #include <memory>
 #include <typeinfo>
@@ -17,8 +18,8 @@ namespace rt {
     auto p1 = this->mesh->vertices[v[1]];
     auto p2 = this->mesh->vertices[v[2]];
 
-    Vec3 o = r.getOrigin() - p0; //< Vector (o - v0)
-    Vec3 d = r.getDirection();   //< Ray direction
+    Vec3 o = (r.getOrigin() - p0); //< Vector (o - v0)
+    Vec3 d = (r.getDirection());   //< Ray direction
     Vec3 v20 = p2 - p0;          //< Vector (v2 - v0)
     Vec3 v10 = p1 - p0;          //< Vector (v1 - v0)
 
@@ -26,8 +27,9 @@ namespace rt {
 
     double det = dot(v10, C);
 
-    if (backface_cull && det > -epsilon) {
-        return false; 
+
+    if (backface_cull) {
+      if (det > -epsilon) return false;
     }
 
     if(std::abs(det) < epsilon){
@@ -65,12 +67,12 @@ namespace rt {
         Vec3 n2 = mesh->normals[n[2]];
           
         sf->n = n0 * (1.0 - U - V) + n1 * U + n2 * V;
-        sf->n.mk_unit_vec();
+        
       }
       
       else {
         sf->n = cross(v10, v20);
-        sf->n.mk_unit_vec();
+        
       }
       
       if(!mesh->uvcoords.empty() && uv[0] >= 0 && uv[1] >= 0 && uv[2] >= 0){  
@@ -89,7 +91,9 @@ namespace rt {
       if (flips_normal) {
         sf->n = -sf->n;
       }
+
     }
+    
 
     return true;
   };
@@ -107,8 +111,11 @@ namespace rt {
 
     double det = dot(v10, C);
 
-    if (backface_cull && det > -epsilon) {
-      return false;
+    bool swaps_handedness =  0 > (*obj_to_world).getTMat3().det();
+
+    if (backface_cull) {
+        bool cull = swaps_handedness ? (det < epsilon) : (det > -epsilon);
+        if (cull) return false;
     }
 
     if(std::abs(det) < epsilon){
@@ -153,11 +160,11 @@ namespace rt {
         ffmax(p0.z(), ffmax(p1.z(), p2.z()))
     );
 
-	box = Bounds3f(p_min, p_max);
+	  box = Bounds3f(p_min, p_max);
     return true;
 }
 
-  std::vector<std::shared_ptr<Shape>> create_triangle_mesh_shape(bool flip_normals, const ParamSet& ps){
+  std::vector<std::shared_ptr<Shape>> create_triangle_mesh_shape(bool flip_normals, std::shared_ptr<Transform> t, std::shared_ptr<Transform> tinv, const ParamSet& ps){
   bool bkfc{ true };                // Controls whether the backface cull should be done or not.
   bool reverse_vertex_order{ false };  // If this is true, we store vertices in
                                        // reverse order inside the mesh.
@@ -259,8 +266,10 @@ namespace rt {
 
   // At this point, the tri_mesh_data object has already been filled in with
   // data coming either from a OBJ file or from the scene file.
-  return create_triangle_mesh(mesh,
-                              bkfc, 
+  return create_triangle_mesh(mesh, 
+                              t,
+                              tinv,
+                              bkfc,
                               flip_normals);  // Note the use of move semantics here.
 }
 
@@ -487,14 +496,13 @@ void extract_obj_data(const tinyobj::attrib_t& attrib,
 }
 
 /// This function creates the internal data structure, required by the RT3.
-std::vector<std::shared_ptr<Shape>> create_triangle_mesh(const std::shared_ptr<TriangleMesh>& mesh, const bool& backface_cull, const bool& flip) {
+std::vector<std::shared_ptr<Shape>> create_triangle_mesh(const std::shared_ptr<TriangleMesh>& mesh, const std::shared_ptr<Transform>& obj_to_world, const std::shared_ptr<Transform>& world_to_obj, const bool& backface_cull, const bool& flip) {
   // List of shapes (triangles) we need to return to the client.
   std::vector<std::shared_ptr<Shape>> tris;
   // Create the triangles, which are just references to the mesh database.
   tris.reserve(mesh->n_triangles);
-
   for (int i = 0; i < mesh->n_triangles; ++i) {
-    tris.emplace_back(std::make_shared<Triangle>(flip, mesh, i, backface_cull));
+    tris.emplace_back(std::make_shared<Triangle>(flip, mesh, i, obj_to_world, world_to_obj, backface_cull));
   }
   return tris;
 }

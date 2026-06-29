@@ -12,15 +12,11 @@
 
 using Resolution = uint16_t;
 
-
 namespace rt {
 
 /// auxiliar funcition that aplies gamma correction  
-inline double apply_gamma(double value, double gamma = 2.2) {
-    if (value <= 0.0) return 0.0;
-    if (value >= 1.0) return 1.0;
-    return std::pow(value, 1.0 / gamma);
-}
+inline double apply_gamma(double value, double gamma = 2.2);
+
 /// Routines to write images to a file.
 bool save_ppm6(const std::vector<RGBColor>&, Resolution, Resolution, const std::string& = "image.ppm", bool = 0);
 

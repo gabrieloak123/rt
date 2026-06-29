@@ -262,17 +262,11 @@ template <typename T>
             * @brief Transforma a matriz em sua forma transposta.
             * @return mat4<T> Matriz transposta gerada a partir da matriz original.
             */
-            inline mat4& transpose() {
-                std::swap(mat[1], mat[4]);
-                std::swap(mat[2], mat[8]);
-                std::swap(mat[3], mat[12]);
-                
-                std::swap(mat[6], mat[9]);
-                std::swap(mat[7], mat[13]);
-                
-                std::swap(mat[11], mat[14]);
-                    
-                return *this;
+            inline mat4<T> transpose() const {
+                return mat4<T>(mat[0], mat[4], mat[8],  mat[12], 
+                               mat[1],  mat[5], mat[9], mat[13],
+                               mat[2], mat[6], mat[10], mat[14],
+                               mat[3], mat[7], mat[11], mat[15]);
             }
             /**
             * @brief Retorna a representação da matriz em vetores de vetores

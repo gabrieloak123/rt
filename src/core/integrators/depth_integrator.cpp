@@ -6,6 +6,8 @@
 
 namespace rt {
 
+  DepthMapIntegrator::DepthMapIntegrator(std::shared_ptr<rt::Camera> cam, double zmin, double zmax, RGBColor near, RGBColor far, int max_depth) : SamplerIntegrator(cam, max_depth), m_zmin(zmin), m_zmax(zmax), m_near_color(near), m_far_color(far) {}
+
 std::optional<rt::RGBColor>
 DepthMapIntegrator::Li(const Ray &ray, const rt::Scene &scene, const int& depth) const {
   rt::Surfel isect;

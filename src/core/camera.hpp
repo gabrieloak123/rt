@@ -7,11 +7,8 @@
 
 #include "film.hpp"
 #include "ray.hpp"
+#include "transform.hpp"
 
-using Mat4 = mat4<double>;
-using Point3 = vec3<double>;
-using Point4 = vec4<double>;
-using Vec3 = vec3<double>;
 
 namespace rt {
 
@@ -70,7 +67,7 @@ public:
    * matrices.
    * @param look_from The camera's position in world space.
    * @param look_at The target point in space the camera is aiming at.
-   * @param vup The View-Up vector (defines which direction is "up").
+   * @param trans The Camera to World transformation.
    * @param l Left boundary of the projection window.
    * @param r Right boundary of the projection window.
    * @param b Bottom boundary of the projection window.
@@ -80,7 +77,7 @@ public:
    * @param focal_dist Focal distance (distance from the camera to the
    * projection plane). Relevant for perspective.
    */
-  OrthographicCamera(Point3 look_from, const Point3 look_at, const Vec3 vup,
+  OrthographicCamera(Point3 look_from, const Point3 look_at, const Transform& trans,
                      double l, double r, double b, double t, int nx, int ny,
                      double focal_dist = 1.0);
 
@@ -93,10 +90,7 @@ public:
    * @brief Camera constructor. Pre-computes all transformation matrices.
    * @param type The projection type (ORTHOGRAPHIC or PERSPECTIVE).
    * @param look_from The camera's position in world space.
-   * @param look_at The target point in space the camera is aiming at.
-   * @param vup The View-Up vector (defines which direction is "up").
-   * @param vpn The View Plane Normal vector (defines the tilt of the projection
-   * plane, useful for oblique projections).
+   * @param trans The Camera to World transformation.
    * @param l Left boundary of the projection window.
    * @param r Right boundary of the projection window.
    * @param b Bottom boundary of the projection window.
@@ -106,8 +100,8 @@ public:
    * @param focal_dist Focal distance (distance from the camera to the
    * projection plane). Relevant for perspective.
    */
-  PerspectiveCamera(Point3 look_from, const Point3 look_at, const Vec3 vup,
-                    Vec3 vpn, int nx, int ny, double fovy, double focal_dist = 1.0);
+  PerspectiveCamera(Point3 look_from, const Point3 look_at, const Transform& trans,
+     int nx, int ny, double fovy, double focal_dist = 1.0);
 
   Ray generate_ray(const int& i, const int& j) override;
 

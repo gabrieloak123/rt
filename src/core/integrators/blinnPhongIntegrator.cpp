@@ -5,10 +5,13 @@
 #include "scenes.hpp"
 #include "visibilityTester.hpp"
 #include <algorithm>
+#include <cmath>
+#include <limits>
 #include <memory>
 #include <optional>
 
 namespace rt {
+    BlinnPhongIntegrator::BlinnPhongIntegrator(std::shared_ptr<rt::Camera> cam, int max_depth) : SamplerIntegrator(cam, max_depth){}
 
     std::optional<RGBColor> BlinnPhongIntegrator::Li(const Ray& ray, const rt::Scene& scene, const int& depth) const {
         RGBColor L(0, 0, 0);
@@ -16,6 +19,7 @@ namespace rt {
         if(!scene.intersect(ray, &isect)){
             return std::nullopt;
         }
+        
         if (dot(ray.getDirection(), isect.n) > 0) {
            isect.n = -isect.n;
         }
@@ -74,7 +78,7 @@ namespace rt {
             auto rd = n * 2 * dot(n, v) - v;
             rd.mk_unit_vec();
 
-            Ray reflected_ray = Ray(isect.p + rd * 0.0001f, rd);
+            Ray reflected_ray = Ray(isect.p + isect.n * 0.001, rd);
             auto tempL = this->Li(reflected_ray, scene, depth + 1);
 
             if(tempL.has_value()){

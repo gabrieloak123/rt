@@ -1,5 +1,5 @@
 #include "visibilityTester.hpp"
-
+#include "scenes.hpp"
 #include "ssmath/vec3.hpp"
 
 namespace rt {

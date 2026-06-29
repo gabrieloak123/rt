@@ -1,24 +1,15 @@
 #ifndef PRIMITIVE_HPP
 #define PRIMITIVE_HPP
 
+#include <cstddef>
 #include <memory>
+
 
 #include "material.hpp"
 #include "ray.hpp"
-
-#ifndef SURFEL_HPP
-namespace rt {
-class Primitive;
-}
 #include "surfel.hpp"
-#endif //< SURFEL_HPP
-
-#ifndef FLOAT_BOUND_HPP
-namespace rt {
-class Bounds3f;
-}
-#include "surfel.hpp"
-#endif //< FLOAT_BOUND_HPP
+#include "fbounds.hpp"
+#include "shape.hpp"
 
 namespace rt {
 
@@ -43,7 +34,7 @@ public:
 
 namespace rt {
 
-enum AggregateType { LIST = 0, BVH };
+// enum AggregateType { LIST = 0, BVH };
 
 class AggregatePrimitive : public Primitive {
 public:
@@ -64,8 +55,7 @@ private:
 
 public:
   PrimitiveList() = default; // Construtor padrão
-  PrimitiveList(std::vector<std::shared_ptr<Primitive>> prim)
-      : primitives(prim) {}
+  PrimitiveList(std::vector<std::shared_ptr<Primitive>> prim);
 
   void add(const std::shared_ptr<Primitive> &primitive);
   bool intersect(const Ray &ray, Surfel *isect) const override;
@@ -85,7 +75,6 @@ public:
 #define GEOMETRIC_PRIMITIVE_HPP
 
 #include "fbounds.hpp"
-#include "shape.hpp"
 #include <memory>
 
 namespace rt {
@@ -94,19 +83,17 @@ class GeometricPrimitive : public Primitive {
 private:
   std::shared_ptr<Shape> shape;
   std::shared_ptr<Material> material;
-
 public:
+  GeometricPrimitive() = default;
   GeometricPrimitive(std::shared_ptr<Shape> shape,
-                     std::shared_ptr<Material> material)
-      : shape(shape), material(material) {};
+                     std::shared_ptr<Material> material);
 
   bool intersect(const Ray &r, Surfel *sf) const override;
   bool intersect_p(const Ray &r) const override;
-  void set_material(const std::shared_ptr<Material> &m) { material = m; };
-  const std::shared_ptr<Material> get_material() const override {
-    return material;
-  }
-  bool box(Bounds3f &box) const override { return shape->box(box);};
+  void set_material(const std::shared_ptr<Material> &m);
+  const std::shared_ptr<Material> get_material() const override { return material;}
+  bool box(Bounds3f &box) const override;
+
 };
 } // namespace rt
 #endif //< GEOMETRIC_PRIMITIVE_HPP
