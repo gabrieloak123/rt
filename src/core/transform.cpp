@@ -50,8 +50,9 @@ namespace rt{
     
     Ray Transform::operator()(const Ray& r) const {
         Vec3 err;
-        Point3 o = (*this)(r.getOrigin(), false, false, &err);
-        Vec3 d = (*this)(r.getDirection(), true, false);  
+        const Transform &M = *this;
+        Point3 o = M(r.getOrigin(), false, false, &err);
+        Vec3 d =   M(r.getDirection(), true, false);  
         double lengthSqr = d.sqr_length();
         double tMin = r.getTMin();
         double tMax = r.getTMax();
@@ -67,24 +68,27 @@ namespace rt{
     }
     Bounds3f Transform::operator()(const Bounds3f& b) const {
         const Transform &M = *this;
-        Bounds3f ret(b);    
+        Bounds3f ret;  
 
+        ret.merge(M(Point3(b.min().x(), b.min().y(), b.min().z())));
         ret.merge(M(Point3(b.max().x(), b.min().y(), b.min().z())));
         ret.merge(M(Point3(b.min().x(), b.max().y(), b.min().z())));
         ret.merge(M(Point3(b.min().x(), b.min().y(), b.max().z())));
         ret.merge(M(Point3(b.min().x(), b.max().y(), b.max().z())));
         ret.merge(M(Point3(b.max().x(), b.max().y(), b.min().z())));
         ret.merge(M(Point3(b.max().x(), b.min().y(), b.max().z())));
-        ret.merge(M(Point3(b.max().x(), b.max().y(), b.max().z())));
-        
+        ret.merge(M(Point3(b.max().x(), b.max().y(), b.max().z())));            
+
         return ret;
     }
 
     Surfel Transform::operator()(const Surfel& s) const{
+        const Transform &M = *this;
         auto temp = s;
-        temp.n = (*this)(s.n, true, true);
-        temp.p = (*this)(s.p, false, false);
-        temp.wo= (*this)(s.wo, true, false);
+
+        temp.n = M(s.n, true, true);
+        temp.p = M(s.p, false, false);
+        temp.wo= M(s.wo, true, false);
 
         temp.n.mk_unit_vec();
         temp.wo.mk_unit_vec();
