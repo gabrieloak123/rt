@@ -148,10 +148,6 @@ namespace rt {
     Point3 p1 = mesh->vertices[v[1]];
     Point3 p2 = mesh->vertices[v[2]];
 
-    p0 = (*obj_to_world)(p0);
-    p1 = (*obj_to_world)(p1);
-    p2 = (*obj_to_world)(p2);
-
     // Calcular limites da bounding box com base em x, y, z
     Point3 p_min(
         ffmin(p0.x(), ffmin(p1.x(), p2.x())),
