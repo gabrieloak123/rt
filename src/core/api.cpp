@@ -301,9 +301,10 @@ void API::world_end(const ParamSet &ps) {
 		break;
 	  case BVH:
     	auto prims = ps.retrieve<int>("max_prims_per_node", 4);
-		auto bvh = std::make_shared<BVHAccel>(primitive_list->get_primitives(), prims);
-		// bvh->print();
-		scene = std::make_unique<Scene>(bvh, m_render_options->background, m_render_options->light_sources);
+      m_render_options->num_prims = prims;
+		  auto bvh = std::make_shared<BVHAccel>(primitive_list->get_primitives(), prims);
+	  	// bvh->print();
+	  	scene = std::make_unique<Scene>(bvh, m_render_options->background, m_render_options->light_sources);
 		break;
   }
 
@@ -454,18 +455,27 @@ void API::object(const ParamSet &ps) {
   } 
   
   else if (type == "triangle") {} 
-  else if (type == "trianglemesh"){  
+  else if (type == "trianglemesh") {  
 
     auto triangles = rt::create_triangle_mesh_shape(flip, t, t1, ps);
+    
+    std::vector<std::shared_ptr<Primitive>> mesh_primitives;
+    mesh_primitives.reserve(triangles.size());
+
     for(const auto& shape : triangles) {
-      auto primitive = std::make_shared<GeometricPrimitive>(shape, m_render_options->current_material);
-      auto pr = std::make_shared<TransformedPrimitive>(primitive, t, t1);
-      if(m_render_options->curr_instance)
-       m_render_options->curr_instance->push_back(pr);
-      else
-       m_render_options->elements.push_back(pr);
+        auto primitive = std::make_shared<GeometricPrimitive>(shape, m_render_options->current_material);
+        mesh_primitives.push_back(primitive);
     }
-  } 
+
+    auto mesh_aggregate = std::make_shared<BVHAccel>(mesh_primitives, m_render_options->num_prims); 
+    
+    auto trans_mesh = std::make_shared<TransformedPrimitive>(mesh_aggregate, t, t1);
+
+    if(m_render_options->curr_instance)
+        m_render_options->curr_instance->push_back(trans_mesh);
+    else
+        m_render_options->elements.push_back(trans_mesh);
+}
   else if (type == "plane") {
     Point3 p = ps.retrieve<Point3>("point", Point3(0, 0, 0));
     Vec3 n = ps.retrieve<Vec3>("normal", Vec3(0, 1, 0));
@@ -583,7 +593,7 @@ void API::obj_instance_call(const ParamSet& ps)
   std::vector<std::shared_ptr<Primitive>> instance_prims_copy = it->second;
   std::shared_ptr<Primitive> aggregate;
   if (m_render_options->aggregator == AggregateType::BVH) {
-         aggregate = std::make_shared<BVHAccel>(instance_prims_copy, 4); 
+         aggregate = std::make_shared<BVHAccel>(instance_prims_copy, m_render_options->num_prims); 
   } else {  
       aggregate = std::make_shared<PrimitiveList>(instance_prims_copy);
   }
@@ -618,12 +628,12 @@ void API::rotate(const ParamSet &ps)
   curr_TM = curr_TM * Transform::rotate(degrees, axis);
 }
 
-void API::push_CTM(const ParamSet &ps)
+void API::push_CTM(const ParamSet&)
 {
   saved_TM.push(curr_TM);
 }
 
-void API::pop_CTM(const ParamSet &ps)
+void API::pop_CTM(const ParamSet&)
 {
   if(!saved_TM.empty()) 
   {
@@ -631,12 +641,12 @@ void API::pop_CTM(const ParamSet &ps)
       saved_TM.pop();
   }
 }
-void API::push_GS(const ParamSet &ps)
+void API::push_GS(const ParamSet&)
 {
   saved_GS.push(curr_GS);
   saved_TM.push(curr_TM);
 }
-void API::pop_GS(const ParamSet &ps)
+void API::pop_GS(const ParamSet&)
 {
   if(!saved_GS.empty()) 
   {

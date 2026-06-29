@@ -45,7 +45,7 @@ struct RenderOptions {
   std::unique_ptr<Integrator> integrator;
   std::unique_ptr<Scene> scene;
   AggregateType aggregator;
-
+  int num_prims = 4;
   std::vector<std::shared_ptr<Light>> light_sources;
   std::vector<std::shared_ptr<Primitive>> elements;
   std::unordered_map<std::string, ParamSet> setup_params;
